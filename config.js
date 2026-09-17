@@ -4,14 +4,14 @@ window.APP_CONFIG = {
 };
 
 window.addEventListener('DOMContentLoaded', () => {
-  for (const href of ['candidate-access.css?v=20260917i', 'admin-tabs-v2.css?v=20260917i']) {
+  for (const href of ['candidate-access.css?v=20260917j', 'admin-tabs-v2.css?v=20260917j', 'ui-audit.css?v=20260917j']) {
     const style = document.createElement('link');
     style.rel = 'stylesheet';
     style.href = href;
     document.head.appendChild(style);
   }
 
-  for (const src of ['referral.js?v=20260917i', 'sprite-helper.js?v=20260917i', 'candidate-dashboard.js?v=20260917i', 'admin-tabs-v2.js?v=20260917i', 'admin-access-direct.js?v=20260917i', 'candidate-auth-no-email.js?v=20260917i', 'residence-select.js?v=20260917i']) {
+  for (const src of ['referral.js?v=20260917j', 'sprite-helper.js?v=20260917j', 'candidate-dashboard.js?v=20260917j', 'admin-tabs-v2.js?v=20260917j', 'admin-access-direct.js?v=20260917j', 'candidate-auth-no-email.js?v=20260917j', 'residence-select.js?v=20260917j']) {
     const script = document.createElement('script');
     script.src = src;
     script.defer = true;
