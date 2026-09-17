@@ -1,4 +1,4 @@
-const referralDb = supabase.createClient(window.APP_CONFIG.SUPABASE_URL, window.APP_CONFIG.SUPABASE_KEY);
+const referralDb = (typeof db !== 'undefined' && db) ? db : supabase.createClient(window.APP_CONFIG.SUPABASE_URL, window.APP_CONFIG.SUPABASE_KEY);
 const activeReferralCode = (new URLSearchParams(window.location.search).get('ref') || '').trim().toLowerCase() || null;
 
 function referralBaseUrl(code){
@@ -18,7 +18,6 @@ async function showReferralBanner(){
   registration?.parentNode?.insertBefore(card,registration);
 }
 
-// Intercepta el botón de inicio para enviar también el código de invitación.
 document.getElementById('startBtn')?.addEventListener('click', async (event)=>{
   event.preventDefault();
   event.stopImmediatePropagation();
@@ -72,11 +71,20 @@ async function copyReferralLink(link,button){
   }
 }
 
+async function referralRows(){
+  const bundled = window.__dashboardBundle?.referral;
+  if(Array.isArray(bundled)) return bundled;
+  const {data,error}=await referralDb.rpc('vote_my_referral_summary');
+  if(error) throw error;
+  return data || [];
+}
+
 async function renderReferralPanel(profile){
   const panel=ensureReferralPanel();
-  const {data,error}=await referralDb.rpc('vote_my_referral_summary');
-  if(error){panel.innerHTML='<h3>Enlace único</h3><p class="muted">No se pudo cargar el enlace en este momento.</p>';return;}
-  const rows=data||[];
+  let rows=[];
+  try{ rows=await referralRows(); }
+  catch(error){ panel.innerHTML='<h3>Enlace único</h3><p class="muted">No se pudo cargar el enlace en este momento.</p>';return; }
+
   if(profile.role==='candidate'){
     const r=rows[0];
     if(!r?.referral_code){panel.innerHTML='<h3>Enlace único</h3><p class="muted">Todavía no hay un enlace asignado.</p>';return;}
@@ -110,7 +118,13 @@ async function renderReferralPanel(profile){
 const originalLoadDashboard = loadDashboard;
 loadDashboard = async function(profile){
   await originalLoadDashboard(profile);
-  await renderReferralPanel(profile);
+  await renderReferralPanel(profile || currentProfile || window.currentProfile || {});
 };
+window.loadDashboard = loadDashboard;
+
+window.addEventListener('dashboard:loaded',(event)=>{
+  const profile=event.detail?.profile || currentProfile || window.currentProfile;
+  if(profile) renderReferralPanel(profile);
+});
 
 showReferralBanner();
