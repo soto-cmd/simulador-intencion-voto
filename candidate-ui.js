@@ -58,8 +58,8 @@
           <h3>${esc(candidate.name || '')}</h3>
           <div class="candidateIdentityMeta">
             <span class="partyChip">${esc(candidate.party_name || candidate.party_abbr || 'Candidatura')}</span>
-            ${candidate.list_number ? `<span>Lista ${esc(candidate.list_number)}</span>` : ''}
-            ${candidate.option_number ? `<span>Opción ${esc(candidate.option_number)}</span>` : ''}
+            ${candidate.list_number ? `<span class="listChip">Lista ${esc(candidate.list_number)}</span>` : ''}
+            ${candidate.option_number ? `<span class="optionChip">Opción ${esc(candidate.option_number)}</span>` : ''}
           </div>
         </div>
       </div>
