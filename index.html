@@ -5,9 +5,9 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <meta name="theme-color" content="#3f4348" />
   <title>Simulador de intención de voto</title>
-  <link rel="stylesheet" href="styles.css" />
-  <link rel="stylesheet" href="polish.css" />
-  <link rel="stylesheet" href="candidate-ui.css" />
+  <link rel="stylesheet" href="styles.css?v=20260917c" />
+  <link rel="stylesheet" href="polish.css?v=20260917c" />
+  <link rel="stylesheet" href="candidate-ui.css?v=20260917c" />
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
@@ -80,7 +80,14 @@
     </section>
 
     <section id="authView" class="hidden narrow">
-      <div class="card"><p class="eyebrow">ACCESO PRIVADO</p><h2>Candidatos y administración</h2><label>Correo</label><input id="email" type="email" autocomplete="email" placeholder="correo@ejemplo.com" /><label>Contraseña</label><input id="password" type="password" autocomplete="current-password" placeholder="••••••••" /><div class="actions"><button id="signInBtn" class="btn">Ingresar</button><button id="signUpBtn" class="btn secondary">Crear cuenta</button><button id="cancelAuthBtn" class="btn ghost">Volver</button></div><p id="authMsg" class="muted"></p></div>
+      <div class="card">
+        <p class="eyebrow">ACCESO PRIVADO</p>
+        <h2>Acceso candidatos y administración</h2>
+        <label>Correo</label><input id="email" type="email" autocomplete="email" placeholder="correo@ejemplo.com" />
+        <label>Contraseña</label><input id="password" type="password" autocomplete="current-password" placeholder="••••••••" />
+        <div class="actions"><button id="signInBtn" class="btn">Ingresar</button><button id="signUpBtn" class="btn secondary">Activar cuenta</button><button id="cancelAuthBtn" class="btn ghost">Volver</button></div>
+        <p id="authMsg" class="muted"></p>
+      </div>
     </section>
 
     <section id="dashboardView" class="hidden">
@@ -89,20 +96,45 @@
 
       <div id="candidateLinkBox" class="card hidden candidateLinkBox">
         <h3>Tu enlace único para participantes</h3>
-        <p class="muted">Compartí este enlace con tus participantes. El sistema cuenta cuántos ingresan desde tu enlace, sin vincularlo con la opción específica que seleccionen.</p>
         <div class="candidateLinkRow"><input id="candidateLinkInput" readonly /><button id="copyCandidateLinkBtn" class="btn secondary">Copiar enlace</button></div>
       </div>
 
-      <div class="dashboardGrid"><div class="card"><h3>Evolución últimos 7 días</h3><div id="history"></div></div><div class="card"><h3>Perfil general de participantes</h3><p class="muted">Estos datos corresponden al conjunto total de participantes y no están cruzados con una candidatura específica.</p><div id="demographics"></div></div></div>
+      <div class="dashboardGrid">
+        <div class="card"><h3>Evolución últimos 7 días</h3><div id="history"></div></div>
+        <div class="card"><h3>Perfil general de participantes</h3><p class="muted">Estos datos corresponden al conjunto total de participantes.</p><div id="demographics"></div></div>
+      </div>
+
       <div id="adminPanel" class="hidden">
-        <div class="card"><h3>Agregar candidatura</h3><div class="formGrid">
-          <div><label>Nombre</label><input id="candName" /></div><div><label>Tipo</label><select id="candRace"><option value="intendente">Intendente municipal</option><option value="junta">Junta municipal</option></select></div><div><label>Cargo visible</label><input id="candOffice" value="Intendente municipal" /></div><div><label>Lista</label><input id="candList" /></div><div><label>Partido / movimiento</label><input id="candParty" /></div><div><label>Sigla</label><input id="candPartyAbbr" placeholder="ANR / PLRA" /></div><div><label>Color</label><input id="candColor" type="color" value="#e11d2f" /></div><div><label>Número de opción (solo Junta)</label><input id="candOption" inputmode="numeric" /></div><div><label>Orden en boleta</label><input id="candOrder" inputmode="numeric" /></div><div><label>Foto URL (opcional)</label><input id="candPhoto" /></div><div><label>Correo del candidato</label><input id="candEmail" type="email" /></div>
-        </div><button id="addCandidateBtn" class="btn">Agregar candidato</button><p id="adminMsg" class="muted"></p><p class="muted">El candidato deberá crear su cuenta con exactamente ese correo para acceder a su panel.</p></div>
-        <div class="card"><h3>Candidaturas</h3><div id="adminCandidates"></div></div>
+        <div class="card" id="candidateAccessAdminCard">
+          <p class="eyebrow">ACCESO DE CANDIDATOS</p>
+          <h3>Habilitar inicio de sesión</h3>
+          <p class="muted">Seleccioná una candidatura existente y asignale el correo con el que podrá activar su cuenta.</p>
+          <div class="formGrid">
+            <div style="grid-column:1/-1">
+              <label for="existingCandidateSelect">Candidato existente</label>
+              <select id="existingCandidateSelect"><option value="">Cargando candidatos…</option></select>
+            </div>
+            <div style="grid-column:1/-1">
+              <label for="candidateAccessEmail">Correo para iniciar sesión</label>
+              <input id="candidateAccessEmail" type="email" placeholder="correo@ejemplo.com" disabled />
+            </div>
+          </div>
+          <p id="candidateAccessStatus" class="muted">Seleccioná un candidato existente.</p>
+          <button id="candidateAccessSave" class="btn" type="button" disabled>Guardar acceso</button>
+          <p id="candidateAccessMsg" class="muted"></p>
+        </div>
+
+        <div class="card">
+          <h3>Candidatos existentes</h3>
+          <div id="adminCandidates"></div>
+        </div>
       </div>
     </section>
   </main>
+
   <div id="toast" class="toast hidden"></div>
-  <script src="config.js"></script><script src="app.js"></script><script src="candidate-ui.js"></script>
+  <script src="config.js?v=20260917c"></script>
+  <script src="app.js?v=20260917c"></script>
+  <script src="candidate-ui.js?v=20260917c"></script>
 </body>
 </html>
