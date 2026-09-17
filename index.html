@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <meta name="theme-color" content="#3f4348" />
   <title>Simulador de intención de voto</title>
-  <link rel="stylesheet" href="styles.css?v=20260917h" />
+  <link rel="stylesheet" href="styles.css?v=20260917i" />
   <link rel="stylesheet" href="polish.css?v=20260917h" />
   <link rel="stylesheet" href="candidate-ui.css?v=20260917g" />
   <link rel="stylesheet" href="mobile.css?v=20260917a" />
@@ -44,7 +44,20 @@
           <div><label for="cedula">Número de cédula</label><input id="cedula" inputmode="numeric" autocomplete="off" placeholder="Ej.: 4123456" /><small>No se guarda el número en texto legible.</small></div>
           <div><label for="gender">Sexo</label><select id="gender"><option value="">Seleccionar</option><option>Mujer</option><option>Hombre</option><option>Otro/Prefiero no decir</option></select></div>
           <div><label for="ageBand">Rango de edad</label><select id="ageBand"><option value="">Seleccionar</option><option>18-24</option><option>25-34</option><option>35-44</option><option>45-59</option><option>60+</option></select></div>
-          <div><label for="residence">Lugar de residencia</label><input id="residence" maxlength="80" placeholder="Ej.: Santa María de Fe" /></div>
+          <div>
+            <label for="residence">Lugar de residencia</label>
+            <select id="residence">
+              <option value="">Seleccionar</option>
+              <option value="Santa María de Fe">Santa María de Fe</option>
+              <option value="San Fernando">San Fernando</option>
+              <option value="Cerro Costa">Cerro Costa</option>
+              <option value="Itacurubí">Itacurubí</option>
+              <option value="San Gerónimo">San Gerónimo</option>
+              <option value="Trinidad Kue">Trinidad Kue</option>
+              <option value="__other__">Otro</option>
+            </select>
+            <input id="residenceOther" class="hidden" maxlength="80" placeholder="Escribí otro lugar" autocomplete="off" />
+          </div>
         </div>
         <label class="consentRow"><input id="consent" type="checkbox" /> <span>Acepto participar voluntariamente en esta simulación y entiendo que los resultados no son una encuesta oficial.</span></label>
         <div class="actions"><button id="startBtn" class="btn">Continuar</button></div>
@@ -140,7 +153,7 @@
 
   <div id="toast" class="toast hidden"></div>
   <script src="config.js?v=20260917g"></script>
-  <script src="app.js?v=20260917g"></script>
+  <script src="app.js?v=20260917i"></script>
   <script src="candidate-ui.js?v=20260917g"></script>
 </body>
 </html>
