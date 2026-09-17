@@ -4,6 +4,7 @@
 
   const esc = (s='') => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const pct = v => `${Number(v || 0).toFixed(1).replace('.0','')}%`;
+  const fmt = v => v ? new Date(v).toLocaleString('es-PY',{dateStyle:'medium',timeStyle:'short'}) : '';
 
   function ensurePanel(){
     const dash = document.getElementById('dashboardView');
@@ -21,11 +22,7 @@
 
   function donut(percent, color, label){
     const p = Math.max(0, Math.min(100, Number(percent || 0)));
-    return `<div class="donutWrap">
-      <div class="donutChart" style="--value:${p};--chart-color:${esc(color || '#1d4ed8')}">
-        <div class="donutCenter"><strong>${pct(p)}</strong><span>${esc(label)}</span></div>
-      </div>
-    </div>`;
+    return `<div class="donutWrap"><div class="donutChart" style="--value:${p};--chart-color:${esc(color || '#1d4ed8')}"><div class="donutCenter"><strong>${pct(p)}</strong><span>${esc(label)}</span></div></div></div>`;
   }
 
   function bar(label, value, color){
@@ -33,37 +30,26 @@
     return `<div class="colorBarRow"><div class="colorBarHead"><span>${esc(label)}</span><strong>${pct(v)}</strong></div><div class="colorBarTrack"><div class="colorBarFill" style="width:${v}%;background:${esc(color)}"></div></div></div>`;
   }
 
-  function candidateVisual(candidate, row){
+  function candidateVisual(candidate, row, profile){
     const color = candidate?.party_color || (candidate?.party_abbr === 'ANR' ? '#e31b23' : candidate?.party_abbr === 'PLRA' ? '#1437d1' : '#1d4ed8');
     const party = candidate?.party_abbr || candidate?.party_name || 'Candidatura';
     const total = Number(row?.total_simulations || 0);
     const votes = Number(row?.candidate_votes || 0);
     const today = Number(row?.today_percentage || 0);
     const main = Number(row?.percentage || 0);
+    const expiry = profile?.access_expires_at ? fmt(profile.access_expires_at) : '';
     return `<div class="candidateVisualCard">
       <div class="candidateVisualHeader" style="--party:${esc(color)}">
-        <div class="candidateIdentity">
-          <span class="candidatePartyDot" style="background:${esc(color)}"></span>
-          <div><small>${esc(party)} · ${esc(candidate?.office || '')}</small><h3>${esc(candidate?.name || row?.candidate_name || 'Mi candidatura')}</h3></div>
-        </div>
-        <span class="candidateListBadge" style="background:${esc(color)}">${candidate?.list_number ? `Lista ${esc(candidate.list_number)}` : esc(party)}</span>
+        <div class="candidateIdentity"><span class="candidatePartyDot" style="background:${esc(color)}"></span><div><small>${esc(party)} · ${esc(candidate?.office || '')}</small><h3>${esc(candidate?.name || row?.candidate_name || 'Mi candidatura')}</h3></div></div>
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;justify-content:flex-end"><span class="candidateListBadge" style="background:${esc(color)}">${candidate?.list_number ? `Lista ${esc(candidate.list_number)}` : esc(party)}</span>${candidate?.option_number ? `<span class="candidateListBadge" style="background:#0f274d">Opción ${esc(candidate.option_number)}</span>`:''}</div>
       </div>
-      <div class="candidateVisualBody">
-        ${donut(main, color, 'Intención de voto')}
-        <div class="candidateVisualMetrics">
-          ${bar('Intención general', main, color)}
-          ${bar('Intención hoy', today, color)}
-          <div class="candidateMiniStats"><div><span>Registros para tu candidatura</span><strong>${votes}</strong></div><div><span>Simulaciones válidas</span><strong>${total}</strong></div></div>
-        </div>
-      </div>
+      ${expiry ? `<div style="padding:10px 18px;background:#f8fafc;border-bottom:1px solid #e2e8f0;font-size:13px;color:#475569"><strong>Acceso habilitado hasta:</strong> ${esc(expiry)}</div>` : ''}
+      <div class="candidateVisualBody">${donut(main, color, 'Intención de voto')}<div class="candidateVisualMetrics">${bar('Intención general', main, color)}${bar('Intención hoy', today, color)}<div class="candidateMiniStats"><div><span>Registros para tu candidatura</span><strong>${votes}</strong></div><div><span>Simulaciones válidas</span><strong>${total}</strong></div></div></div></div>
     </div>`;
   }
 
   function adminVisual(rows, candidates){
-    const valid = (rows || []).map(r => {
-      const c = candidates.find(x => x.id === r.candidate_id) || {};
-      return { name: r.candidate_name || c.name || 'Candidato', value: Number(r.percentage || 0), color: c.party_color || (c.party_abbr === 'ANR' ? '#e31b23' : c.party_abbr === 'PLRA' ? '#1437d1' : '#64748b'), race: c.race_type || '' };
-    }).sort((a,b)=>b.value-a.value);
+    const valid = (rows || []).map(r => { const c = candidates.find(x => x.id === r.candidate_id) || {}; return { name:r.candidate_name || c.name || 'Candidato', value:Number(r.percentage || 0), color:c.party_color || (c.party_abbr === 'ANR' ? '#e31b23' : c.party_abbr === 'PLRA' ? '#1437d1' : '#64748b'), race:c.race_type || '' }; }).sort((a,b)=>b.value-a.value);
     if(!valid.length) return '';
     return `<div class="adminVisualCard"><div class="visualSectionTitle"><div><span class="eyebrow">PANORAMA GENERAL</span><h3>Intención de voto por candidatura</h3></div><div class="chartLegend"><span><i style="background:#e31b23"></i>ANR</span><span><i style="background:#1437d1"></i>PLRA</span></div></div><div class="adminColorBars">${valid.map(x=>bar(`${x.name}${x.race ? ` · ${x.race}` : ''}`,x.value,x.color)).join('')}</div></div>`;
   }
@@ -76,23 +62,22 @@
     try{
       const {data:{session}} = await client.auth.getSession();
       if(!session) return;
-      const {data:profile} = await client.from('vote_candidate_users').select('role,candidate_id').maybeSingle();
+      const {data:profileData} = await client.rpc('vote_my_profile');
+      const profile = Array.isArray(profileData) ? profileData[0] : profileData;
       if(!profile) return;
       const [{data:rows},{data:cands}] = await Promise.all([
         client.rpc('vote_my_dashboard'),
-        client.from('vote_candidates').select('id,name,office,list_number,party_name,party_abbr,party_color,race_type').eq('active',true)
+        client.from('vote_candidates').select('id,name,office,list_number,option_number,party_name,party_abbr,party_color,race_type').eq('active',true)
       ]);
       const panel = ensurePanel();
       if(!panel) return;
       if(profile.role === 'candidate'){
         const candidate = (cands || []).find(c => c.id === profile.candidate_id) || {};
-        panel.innerHTML = candidateVisual(candidate, (rows || [])[0] || {});
-        panel.classList.add('candidateMode');
-        panel.classList.remove('adminMode');
+        panel.innerHTML = candidateVisual(candidate, (rows || [])[0] || {}, profile);
+        panel.classList.add('candidateMode'); panel.classList.remove('adminMode');
       }else{
         panel.innerHTML = adminVisual(rows || [], cands || []);
-        panel.classList.add('adminMode');
-        panel.classList.remove('candidateMode');
+        panel.classList.add('adminMode'); panel.classList.remove('candidateMode');
       }
     }catch(err){ console.error('visual dashboard',err); }
     finally{ running = false; }
