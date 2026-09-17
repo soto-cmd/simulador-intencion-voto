@@ -1,5 +1,5 @@
 (() => {
-  const client = supabase.createClient(window.APP_CONFIG.SUPABASE_URL, window.APP_CONFIG.SUPABASE_KEY);
+  const client = (typeof db !== 'undefined' && db) ? db : supabase.createClient(window.APP_CONFIG.SUPABASE_URL, window.APP_CONFIG.SUPABASE_KEY);
   let rows = [];
 
   const esc = (s='') => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -53,7 +53,11 @@
     if(!select.value) return;
 
     const {data,error} = await client.rpc('vote_admin_candidate_access_status');
-    if(error) return;
+    if(error){
+      console.error('vote_admin_candidate_access_status', error);
+      status.textContent = 'No se pudo consultar el estado del acceso.';
+      return;
+    }
     const row = (data || []).find(r => r.candidate_id === select.value);
     if(!row) return;
 
@@ -66,6 +70,14 @@
       email.value = row.access_email;
       status.textContent = `Acceso pendiente para ${row.access_email}`;
     }
+  }
+
+  function errorText(reason, data){
+    if(reason === 'not_authorized') return 'La sesión de administrador venció. Cerrá sesión e ingresá nuevamente.';
+    if(reason === 'invalid_email') return 'El correo ingresado no es válido.';
+    if(reason === 'candidate_not_found') return 'No se encontró ese candidato.';
+    if(reason === 'account_already_active') return `La cuenta ya está activa${data?.email ? ` con ${data.email}` : ''}.`;
+    return 'No se pudo guardar el acceso.';
   }
 
   async function saveAccess(){
@@ -81,19 +93,27 @@
     btn.disabled = true;
     msg.textContent = 'Guardando acceso…';
     try{
+      const {data: sessionData} = await client.auth.getSession();
+      if(!sessionData?.session){
+        msg.textContent = 'La sesión de administrador venció. Cerrá sesión e ingresá nuevamente.';
+        return;
+      }
+
       const {data,error} = await client.rpc('vote_admin_set_candidate_access', {p_candidate_id:candidateId,p_email:email});
-      if(error) throw error;
+      if(error){
+        console.error('vote_admin_set_candidate_access', error);
+        msg.textContent = error.message ? `No se pudo guardar: ${error.message}` : 'No se pudo guardar el acceso.';
+        return;
+      }
       if(!data?.ok){
-        msg.textContent = data?.reason === 'account_already_active'
-          ? `La cuenta ya está activa${data.email ? ` con ${data.email}` : ''}.`
-          : 'No se pudo guardar el acceso.';
+        msg.textContent = errorText(data?.reason, data);
         return;
       }
       msg.textContent = `Acceso guardado para ${data.candidate}.`;
       await loadCandidateStatus();
     }catch(err){
       console.error(err);
-      msg.textContent = 'No se pudo guardar el acceso.';
+      msg.textContent = err?.message ? `No se pudo guardar: ${err.message}` : 'No se pudo guardar el acceso.';
     }finally{
       if(!emailEl.disabled) btn.disabled = false;
     }
