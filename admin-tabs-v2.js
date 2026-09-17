@@ -20,7 +20,7 @@
       nav.innerHTML = `
         <button type="button" data-admin-tab="resumen" class="active"><span class="tabIcon">▦</span><span><strong>Resumen</strong><small>Estadísticas y evolución</small></span></button>
         <button type="button" data-admin-tab="enlaces"><span class="tabIcon">↗</span><span><strong>Enlaces</strong><small>Invitaciones de candidatos</small></span></button>
-        <button type="button" data-admin-tab="candidaturas"><span class="tabIcon">◎</span><span><strong>Candidaturas</strong><small>Agregar y administrar</small></span></button>`;
+        <button type="button" data-admin-tab="candidaturas"><span class="tabIcon">◎</span><span><strong>Candidatos</strong><small>Accesos y administración</small></span></button>`;
       head.insertAdjacentElement('afterend', nav);
       nav.querySelectorAll('[data-admin-tab]').forEach(btn => btn.addEventListener('click', () => {
         currentTab = btn.dataset.adminTab;
@@ -57,7 +57,7 @@
     });
     const title = document.getElementById('dashboardTitle');
     if(title){
-      title.textContent = currentTab === 'resumen' ? 'Administración general' : currentTab === 'enlaces' ? 'Enlaces de candidatos' : 'Gestión de candidaturas';
+      title.textContent = currentTab === 'resumen' ? 'Administración general' : currentTab === 'enlaces' ? 'Enlaces de candidatos' : 'Acceso de candidatos';
     }
   }
 
