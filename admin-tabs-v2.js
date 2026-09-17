@@ -1,10 +1,20 @@
 (() => {
   let currentTab = 'resumen';
   let started = false;
+  let candidatesLoaded = false;
 
   function setVisible(el, visible){
     if(!el) return;
     el.style.display = visible ? '' : 'none';
+  }
+
+  async function prepareTab(tab){
+    if(tab === 'vista-candidato'){
+      try { await window.ensureAdminPreviewFast?.(); } catch {}
+    } else if(tab === 'candidaturas' && !candidatesLoaded){
+      candidatesLoaded = true;
+      try { await loadAdminCandidates?.(); } catch { candidatesLoaded = false; }
+    }
   }
 
   function ensureNav(){
@@ -22,9 +32,10 @@
         <button type="button" data-admin-tab="vista-candidato"><span class="tabIcon">◉</span><span><strong>Vista candidato</strong><small>Ver lo que ve cada candidato</small></span></button>
         <button type="button" data-admin-tab="candidaturas"><span class="tabIcon">◎</span><span><strong>Candidatos</strong><small>Accesos y administración</small></span></button>`;
       head.insertAdjacentElement('afterend', nav);
-      nav.querySelectorAll('[data-admin-tab]').forEach(btn => btn.addEventListener('click', () => {
+      nav.querySelectorAll('[data-admin-tab]').forEach(btn => btn.addEventListener('click', async () => {
         currentTab = btn.dataset.adminTab;
         applyTab();
+        await prepareTab(currentTab);
       }));
     }
     return nav;
