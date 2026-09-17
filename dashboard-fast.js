@@ -100,10 +100,6 @@
 
     window.ensureRoleModules?.(p.role);
     window.dispatchEvent(new CustomEvent('dashboard:loaded',{detail:{profile:p,bundle:data}}));
-
-    if(p.role === 'admin'){
-      setTimeout(() => { try { loadAdminCandidates?.(); } catch{} }, 900);
-    }
   }
 
   async function fastClaimRoleAndDashboard(){
