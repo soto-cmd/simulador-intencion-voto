@@ -1,0 +1,233 @@
+/* Mobile layout refinements */
+@media (max-width: 700px) {
+  body { overflow-x: hidden; }
+
+  .topbarElection {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center !important;
+    gap: 8px 10px !important;
+    padding: 10px 12px !important;
+  }
+
+  .topbarElection .brand {
+    min-width: 0 !important;
+    gap: 9px !important;
+  }
+
+  .topbarElection .brandMark {
+    width: 38px !important;
+    height: 38px !important;
+    border-radius: 10px !important;
+    flex: 0 0 38px;
+  }
+
+  .topbarElection .brand strong {
+    font-size: 14px !important;
+    line-height: 1.12 !important;
+    white-space: normal;
+  }
+
+  .topbarElection .badge {
+    margin-top: 3px !important;
+    padding: 1px 6px !important;
+    font-size: 9px !important;
+  }
+
+  #loginBtn {
+    grid-column: 2;
+    grid-row: 1;
+    min-height: 38px !important;
+    padding: 8px 11px !important;
+    border-radius: 10px !important;
+    font-size: 12px !important;
+    white-space: nowrap;
+    box-shadow: none !important;
+  }
+
+  .electionMeta {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    display: flex !important;
+    justify-content: flex-start !important;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 3px 0 !important;
+    width: 100%;
+    font-size: 11px !important;
+    line-height: 1.25 !important;
+    color: #eef2f7;
+  }
+
+  .electionMeta strong { display: none; }
+  .electionMeta span { white-space: nowrap; }
+  .electionMeta span:not(:last-child)::after {
+    content: "·";
+    display: inline-block;
+    margin: 0 7px;
+    color: #aeb7c3;
+    font-weight: 800;
+  }
+
+  .wrap,
+  .ballotWrap {
+    width: calc(100% - 20px) !important;
+    margin: 12px auto 24px !important;
+  }
+
+  .card {
+    padding: 18px !important;
+    border-radius: 16px !important;
+  }
+
+  .heroCompact {
+    padding: 20px !important;
+  }
+
+  .heroCompact .eyebrow {
+    font-size: 10px !important;
+    letter-spacing: .13em !important;
+    margin-bottom: 9px !important;
+  }
+
+  .heroCompact h1 {
+    font-size: clamp(34px, 10vw, 42px) !important;
+    line-height: 1.02 !important;
+    margin: 0 0 14px !important;
+    letter-spacing: -.045em !important;
+  }
+
+  .heroCompact p {
+    max-width: none !important;
+    margin: 0 !important;
+    font-size: 15px !important;
+    line-height: 1.5 !important;
+  }
+
+  .formCard {
+    margin: 12px 0 16px !important;
+  }
+
+  .formCard h2 {
+    font-size: 25px !important;
+    margin: 0 0 14px !important;
+  }
+
+  .formGrid {
+    gap: 10px !important;
+  }
+
+  label {
+    margin-top: 5px !important;
+    font-size: 12px !important;
+  }
+
+  input,
+  select {
+    min-height: 46px;
+    font-size: 16px;
+    border-radius: 10px !important;
+  }
+
+  .consentRow {
+    margin-top: 14px !important;
+    font-size: 13px;
+    line-height: 1.35;
+  }
+
+  .actions .btn,
+  #startBtn {
+    width: 100%;
+    min-height: 48px !important;
+  }
+
+  .ballotShell {
+    padding: 5px !important;
+  }
+
+  .ballotTitleBar {
+    padding: 9px 10px !important;
+  }
+
+  .ballotTitleMain {
+    font-size: 18px !important;
+    line-height: 1.12 !important;
+  }
+
+  .ballotTitleSub {
+    font-size: 11px !important;
+  }
+
+  .progressPills {
+    flex-wrap: nowrap !important;
+    overflow-x: auto;
+    justify-content: flex-start !important;
+    gap: 6px !important;
+    padding: 8px !important;
+    scrollbar-width: none;
+  }
+
+  .progressPills::-webkit-scrollbar { display: none; }
+  .progressPill {
+    flex: 0 0 auto;
+    padding: 6px 9px !important;
+    font-size: 11px !important;
+  }
+
+  .ballotCardParty { font-size: 23px !important; }
+  .ballotCardName { font-size: 21px !important; padding-bottom: 18px !important; }
+  .ballotCardBody { padding: 6px 14px 14px !important; }
+  .ballotCardPhoto { height: 180px !important; }
+  .listCard .listNumber { font-size: 54px !important; }
+  .listCard .listParty { font-size: 25px !important; }
+  .listCard .listAbbr { font-size: 32px !important; }
+
+  .dashboardHead {
+    align-items: center !important;
+  }
+
+  .dashboardHead h2 {
+    font-size: 27px !important;
+    line-height: 1.05 !important;
+  }
+
+  #logoutBtn {
+    min-height: 40px !important;
+    padding: 8px 10px !important;
+    font-size: 12px !important;
+    white-space: nowrap;
+  }
+
+  .candidateLinkBox,
+  .dashboardGrid > .card,
+  #adminPanel > .card {
+    padding: 18px !important;
+  }
+}
+
+@media (max-width: 430px) {
+  .topbarElection {
+    grid-template-columns: minmax(0,1fr) auto;
+  }
+
+  .topbarElection .brand strong {
+    font-size: 13px !important;
+  }
+
+  #loginBtn {
+    font-size: 11px !important;
+    padding: 7px 9px !important;
+  }
+
+  .electionMeta {
+    font-size: 10px !important;
+  }
+
+  .heroCompact h1 {
+    font-size: 34px !important;
+  }
+
+  .heroCompact p {
+    font-size: 14px !important;
+  }
+}
