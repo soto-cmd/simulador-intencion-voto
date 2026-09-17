@@ -58,6 +58,12 @@
         if (msg) msg.textContent = 'Esta cuenta no tiene acceso al simulador.';
         return;
       }
+      if (profile.role !== 'admin' && profile.access_active === false) {
+        await client.auth.signOut();
+        const until = profile.access_expires_at ? new Date(profile.access_expires_at).toLocaleString('es-PY',{dateStyle:'medium',timeStyle:'short'}) : '';
+        if (msg) msg.textContent = `Tu acceso está vencido${until ? ` desde ${until}` : ''}. Contactá al administrador para renovarlo.`;
+        return;
+      }
       if (msg) msg.textContent = '';
       await openDashboard(profile);
     } catch (error) {
@@ -100,6 +106,7 @@
           invalid_credentials: 'Revisá el correo, la contraseña y el código de activación.',
           invalid_code: 'El código de activación no es correcto.',
           code_expired: 'El código venció. Pedí al administrador que genere uno nuevo.',
+          access_expired: 'El período de acceso ya venció. Pedí al administrador que lo renueve.',
           too_many_attempts: 'Se alcanzó el límite de intentos. Pedí un código nuevo.',
           candidate_inactive: 'Esta candidatura no está habilitada.'
         };
@@ -111,7 +118,11 @@
       const { error: signInError } = await client.auth.signInWithPassword({ email, password });
       if (signInError) { if (msg) msg.textContent = 'La cuenta quedó activada. Pulsá Ingresar para acceder.'; return; }
       const profile = await getProfile();
-      if (!profile) { if (msg) msg.textContent = 'La cuenta se activó, pero no se pudo abrir el panel.'; return; }
+      if (!profile || profile.access_active === false) {
+        await client.auth.signOut();
+        if (msg) msg.textContent = 'La cuenta se activó, pero el período de acceso ya no está vigente.';
+        return;
+      }
       await openDashboard(profile);
     } catch (error) {
       console.error('candidate activation', error);
@@ -140,7 +151,7 @@
       const p = document.createElement('p');
       p.id = 'noEmailVerificationHelp';
       p.className = 'muted';
-      p.textContent = 'Los candidatos activan su cuenta con el correo y el código entregados por el administrador. No se requiere verificación por correo.';
+      p.textContent = 'Los candidatos activan su cuenta con el correo y el código entregados por el administrador. El acceso puede tener una fecha de vencimiento.';
       auth.querySelector('.card')?.appendChild(p);
     }
   }
