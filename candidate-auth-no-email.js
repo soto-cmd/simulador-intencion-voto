@@ -40,6 +40,34 @@
     input.insertAdjacentElement('beforebegin', label);
   }
 
+  function ensureInstructions() {
+    const auth = document.getElementById('authView');
+    const card = auth?.querySelector('.card');
+    if (!card || document.getElementById('candidateLoginInstructions')) return;
+
+    const box = document.createElement('div');
+    box.id = 'candidateLoginInstructions';
+    box.style.cssText = 'margin:0 0 22px;padding:18px 20px;border:1px solid #d7e0ec;border-radius:16px;background:#f7f9fc;color:#15345f;line-height:1.5';
+    box.innerHTML = `
+      <div style="font-weight:800;font-size:17px;margin-bottom:10px">¿Es tu primera vez?</div>
+      <div style="margin-bottom:10px">Para activar tu cuenta necesitás los datos entregados por el administrador:</div>
+      <ol style="margin:0 0 12px 20px;padding:0">
+        <li>Ingresá el <strong>correo autorizado</strong>.</li>
+        <li>Elegí una <strong>contraseña de al menos 8 caracteres</strong>.</li>
+        <li>Ingresá el <strong>código de activación de 8 caracteres</strong>.</li>
+        <li>Pulsá <strong>Activar cuenta</strong>.</li>
+      </ol>
+      <div style="padding-top:10px;border-top:1px solid #e2e8f0"><strong>Si ya activaste tu cuenta:</strong> ingresá solamente con tu correo y contraseña usando el botón <strong>Ingresar</strong>.</div>
+      <div style="margin-top:10px;font-size:13px;color:#64748b">Tu acceso puede tener fecha de vencimiento. Si venció, contactá al administrador para renovarlo. No se requiere verificación por correo.</div>
+    `;
+
+    const eyebrow = card.querySelector('.eyebrow');
+    const title = card.querySelector('h2');
+    if (title) title.insertAdjacentElement('afterend', box);
+    else if (eyebrow) eyebrow.insertAdjacentElement('afterend', box);
+    else card.prepend(box);
+  }
+
   async function robustSignIn() {
     const email = (document.getElementById('email')?.value || '').trim().toLowerCase();
     const password = document.getElementById('password')?.value || '';
@@ -144,16 +172,11 @@
 
   function adjustCopy() {
     ensureActivationField();
+    ensureInstructions();
     const btn = document.getElementById('signUpBtn');
     if (btn) btn.textContent = 'Activar cuenta';
-    const auth = document.getElementById('authView');
-    if (auth && !document.getElementById('noEmailVerificationHelp')) {
-      const p = document.createElement('p');
-      p.id = 'noEmailVerificationHelp';
-      p.className = 'muted';
-      p.textContent = 'Los candidatos activan su cuenta con el correo y el código entregados por el administrador. El acceso puede tener una fecha de vencimiento.';
-      auth.querySelector('.card')?.appendChild(p);
-    }
+    const oldHelp = document.getElementById('noEmailVerificationHelp');
+    if (oldHelp) oldHelp.remove();
   }
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', adjustCopy);
