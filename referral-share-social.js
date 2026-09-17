@@ -1,6 +1,7 @@
 (() => {
   const shareDb = supabase.createClient(window.APP_CONFIG.SUPABASE_URL, window.APP_CONFIG.SUPABASE_KEY);
   const escShare = (s='') => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  let started=false;
 
   const networks = [
     ['facebook_url','Facebook','f'],['instagram_url','Instagram','◎'],['tiktok_url','TikTok','♪'],
@@ -11,7 +12,7 @@
     return networks.filter(([key])=>candidate?.[key]).map(([key,label,icon])=>`<a class="candidateSocialButton" href="${escShare(candidate[key])}" target="_blank" rel="noopener noreferrer"><span>${icon}</span>${label}</a>`).join('');
   }
 
-  async function shareLink(link, name=''){ 
+  async function shareLink(link, name=''){
     const title = name ? `Simulador de intención de voto · ${name}` : 'Simulador de intención de voto';
     const text = name ? `Participá en el simulador desde el enlace compartido por ${name}.` : 'Participá en el simulador de intención de voto.';
     if(navigator.share){
@@ -50,10 +51,15 @@
     const registration=document.getElementById('registrationCard'); registration?.parentNode?.insertBefore(card,registration);
   }
 
-  const observer=new MutationObserver(()=>enhanceCandidateReferralPanel());
-  window.addEventListener('DOMContentLoaded',()=>{
+  function start(){
+    if(started) return;
+    started=true;
+    const observer=new MutationObserver(()=>enhanceCandidateReferralPanel());
     observer.observe(document.body,{childList:true,subtree:true});
-    setTimeout(enhanceCandidateReferralPanel,500);
-    setTimeout(renderPublicSocials,400);
-  });
+    setTimeout(enhanceCandidateReferralPanel,250);
+    setTimeout(renderPublicSocials,250);
+  }
+
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',start,{once:true});
+  else start();
 })();
