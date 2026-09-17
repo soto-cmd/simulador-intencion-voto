@@ -3,28 +3,28 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <meta name="theme-color" content="#12213b" />
+  <meta name="theme-color" content="#3f4348" />
   <title>Simulador de intención de voto</title>
   <link rel="stylesheet" href="styles.css" />
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
-  <header class="topbar">
-    <div class="brand">
-      <div class="brandMark">SV</div>
+  <header class="topbar topbarElection">
+    <div class="brand electionBrand">
+      <div class="brandMark shield">SV</div>
       <div><strong>Simulador de intención de voto</strong><span class="badge">No oficial</span></div>
     </div>
+    <div class="electionMeta"><span><strong>Elección:</strong> Elecciones municipales</span><span><strong>Departamento:</strong> Misiones</span><span><strong>Distrito:</strong> Santa María de Fe</span></div>
     <button id="loginBtn" class="btn secondary">Acceso candidatos</button>
   </header>
 
-  <main class="wrap">
+  <main class="wrap ballotWrap">
     <section id="publicView">
-      <div class="hero card">
+      <div class="hero card heroCompact">
         <p class="eyebrow">SIMULACIÓN INDEPENDIENTE</p>
         <h1>Simulá tu intención de voto</h1>
-        <p>Completá los datos de participación y luego elegí una candidatura. La cédula se usa únicamente para evitar participaciones duplicadas y no queda vinculada a tu voto.</p>
+        <p>Completá los datos de participación y luego realizá una simulación similar al flujo de votación: Intendente municipal, lista de Junta municipal y candidato a Junta. La cédula se usa únicamente para evitar participaciones duplicadas y no queda vinculada a tu voto.</p>
       </div>
-
       <div id="registrationCard" class="card formCard">
         <h2>Datos de participación</h2>
         <div class="formGrid">
@@ -33,49 +33,46 @@
           <div><label for="ageBand">Rango de edad</label><select id="ageBand"><option value="">Seleccionar</option><option>18-24</option><option>25-34</option><option>35-44</option><option>45-59</option><option>60+</option></select></div>
           <div><label for="residence">Lugar de residencia</label><input id="residence" maxlength="80" placeholder="Ej.: Santa María de Fe" /></div>
         </div>
-        <label class="consentRow"><input id="consent" type="checkbox" /><span>Acepto participar voluntariamente en esta simulación y entiendo que los resultados no son una encuesta oficial.</span></label>
+        <label class="consentRow"><input id="consent" type="checkbox" /> <span>Acepto participar voluntariamente en esta simulación y entiendo que los resultados no son una encuesta oficial.</span></label>
         <div class="actions"><button id="startBtn" class="btn">Continuar</button></div>
         <p id="registrationMsg" class="muted"></p>
       </div>
 
-      <div id="ballotSection" class="hidden">
-        <div class="sectionHead"><div><p class="eyebrow">BOLETA SIMULADA</p><h2>¿A quién elegirías?</h2></div><span class="stepPill">1 participación por cédula</span></div>
-        <div id="candidateGrid" class="grid"></div>
-      </div>
+      <section id="ballotSection" class="hidden">
+        <div class="ballotShell">
+          <div class="ballotTitleBar"><div class="ballotTitleMain" id="ballotStepTitle">Candidatos a Intendente municipal</div><div class="ballotTitleSub" id="ballotStepSub">Elegí una opción para continuar.</div></div>
+          <div id="progressPills" class="progressPills"><span class="progressPill active">1. Intendente</span><span class="progressPill">2. Lista de Junta</span><span class="progressPill">3. Candidato a Junta</span><span class="progressPill">4. Confirmación</span></div>
+          <div id="stepIntendente" class="ballotStep hidden"><div id="intendenteGrid" class="ballotGrid ballotGridTwo"></div></div>
+          <div id="stepJuntaList" class="ballotStep hidden"><div id="juntaListGrid" class="ballotGrid ballotGridTwo"></div></div>
+          <div id="stepJuntaCandidate" class="ballotStep hidden"><div class="panelHeaderCard" id="juntaListHeading"></div><div id="juntaCandidateGrid" class="ballotGrid ballotGridCandidates"></div></div>
+          <div id="stepSummary" class="ballotStep hidden">
+            <div class="summaryHeader">Opciones seleccionadas</div>
+            <div class="summaryGrid"><div class="summaryChoice" id="summaryIntendente"></div><div class="summaryChoice" id="summaryJunta"></div><div class="summaryActionsCard"><button id="restartSelectionBtn" class="summaryAction orange">Reiniciar selección</button><button id="submitBallotBtn" class="summaryAction green">Registrar simulación</button></div></div>
+          </div>
+          <div class="ballotFooterActions"><button id="backStepBtn" class="btn ghost hidden">Volver atrás</button><button id="restartStepBtn" class="btn secondary hidden">Reiniciar</button></div>
+        </div>
+      </section>
 
-      <div id="completedCard" class="card successCard hidden"><div class="successIcon">✓</div><h2>Simulación registrada</h2><p>Gracias por participar. Tu intención de voto fue registrada de forma separada de los datos demográficos.</p></div>
+      <div id="completedCard" class="card successCard hidden"><div class="successIcon">✓</div><h2>Simulación registrada</h2><p>Gracias por participar. La intención de voto quedó registrada por separado de los datos demográficos.</p><button id="newSimulationBtn" class="btn secondary">Nueva simulación</button></div>
       <p class="disclaimer">Los resultados reflejan únicamente la intención registrada dentro de este simulador. No constituyen una encuesta oficial, una proyección electoral ni un resultado del TSJE.</p>
     </section>
 
     <section id="authView" class="hidden narrow">
-      <div class="card">
-        <p class="eyebrow">ACCESO PRIVADO</p><h2>Candidatos y administración</h2>
-        <label>Correo</label><input id="email" type="email" autocomplete="email" placeholder="correo@ejemplo.com" />
-        <label>Contraseña</label><input id="password" type="password" autocomplete="current-password" placeholder="••••••••" />
-        <div class="actions"><button id="signInBtn" class="btn">Ingresar</button><button id="signUpBtn" class="btn secondary">Crear cuenta</button><button id="cancelAuthBtn" class="btn ghost">Volver</button></div>
-        <p id="authMsg" class="muted"></p>
-      </div>
+      <div class="card"><p class="eyebrow">ACCESO PRIVADO</p><h2>Candidatos y administración</h2><label>Correo</label><input id="email" type="email" autocomplete="email" placeholder="correo@ejemplo.com" /><label>Contraseña</label><input id="password" type="password" autocomplete="current-password" placeholder="••••••••" /><div class="actions"><button id="signInBtn" class="btn">Ingresar</button><button id="signUpBtn" class="btn secondary">Crear cuenta</button><button id="cancelAuthBtn" class="btn ghost">Volver</button></div><p id="authMsg" class="muted"></p></div>
     </section>
 
     <section id="dashboardView" class="hidden">
       <div class="dashboardHead"><div><p class="eyebrow">PANEL PRIVADO</p><h2 id="dashboardTitle">Panel</h2></div><button id="logoutBtn" class="btn ghost">Cerrar sesión</button></div>
       <div id="statsGrid" class="stats"></div>
-      <div class="dashboardGrid">
-        <div class="card"><h3>Evolución últimos 7 días</h3><div id="history"></div></div>
-        <div class="card"><h3>Perfil general de participantes</h3><p class="muted">Estos datos corresponden al conjunto total de participantes y no están cruzados con una candidatura específica.</p><div id="demographics"></div></div>
-      </div>
+      <div class="dashboardGrid"><div class="card"><h3>Evolución últimos 7 días</h3><div id="history"></div></div><div class="card"><h3>Perfil general de participantes</h3><p class="muted">Estos datos corresponden al conjunto total de participantes y no están cruzados con una candidatura específica.</p><div id="demographics"></div></div></div>
       <div id="adminPanel" class="hidden">
-        <div class="card">
-          <h3>Agregar candidato</h3>
-          <div class="formGrid"><div><label>Nombre</label><input id="candName" /></div><div><label>Cargo</label><input id="candOffice" value="Intendente municipal" /></div><div><label>Lista</label><input id="candList" /></div><div><label>Foto URL (opcional)</label><input id="candPhoto" /></div><div><label>Correo del candidato</label><input id="candEmail" type="email" /></div></div>
-          <button id="addCandidateBtn" class="btn">Agregar candidato</button><p id="adminMsg" class="muted"></p><p class="muted">El candidato deberá crear su cuenta con exactamente ese correo para acceder a su panel.</p>
-        </div>
+        <div class="card"><h3>Agregar candidatura</h3><div class="formGrid">
+          <div><label>Nombre</label><input id="candName" /></div><div><label>Tipo</label><select id="candRace"><option value="intendente">Intendente municipal</option><option value="junta">Junta municipal</option></select></div><div><label>Cargo visible</label><input id="candOffice" value="Intendente municipal" /></div><div><label>Lista</label><input id="candList" /></div><div><label>Partido / movimiento</label><input id="candParty" /></div><div><label>Sigla</label><input id="candPartyAbbr" placeholder="ANR / PLRA" /></div><div><label>Color</label><input id="candColor" type="color" value="#e11d2f" /></div><div><label>Número de opción (solo Junta)</label><input id="candOption" inputmode="numeric" /></div><div><label>Orden en boleta</label><input id="candOrder" inputmode="numeric" /></div><div><label>Foto URL (opcional)</label><input id="candPhoto" /></div><div><label>Correo del candidato</label><input id="candEmail" type="email" /></div>
+        </div><button id="addCandidateBtn" class="btn">Agregar candidato</button><p id="adminMsg" class="muted"></p><p class="muted">El candidato deberá crear su cuenta con exactamente ese correo para acceder a su panel.</p></div>
         <div class="card"><h3>Candidaturas</h3><div id="adminCandidates"></div></div>
       </div>
     </section>
   </main>
-
-  <div id="voteModal" class="modal hidden"><div class="modalBox"><p class="eyebrow">CONFIRMACIÓN</p><h2>Confirmar intención de voto</h2><div id="modalCandidate"></div><p>¿Querés registrar esta opción en el simulacro?</p><div class="actions"><button id="confirmVoteBtn" class="btn">Confirmar</button><button id="cancelVoteBtn" class="btn ghost">Cancelar</button></div></div></div>
   <div id="toast" class="toast hidden"></div>
   <script src="config.js"></script><script src="app.js"></script>
 </body>
