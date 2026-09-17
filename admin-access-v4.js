@@ -1,5 +1,5 @@
 (() => {
-  const client = supabase.createClient(window.APP_CONFIG.SUPABASE_URL, window.APP_CONFIG.SUPABASE_KEY);
+  const client = (typeof db !== 'undefined' && db) ? db : supabase.createClient(window.APP_CONFIG.SUPABASE_URL, window.APP_CONFIG.SUPABASE_KEY);
   let statusRows = [];
   let mountedCard = null;
   let busy = false;
@@ -18,9 +18,7 @@
   }
 
   function candidateLabel(r){
-    const parts = [];
-    if(r.race_type === 'intendente') parts.push('Intendente');
-    else parts.push('Junta');
+    const parts = [r.race_type === 'intendente' ? 'Intendente' : 'Junta'];
     if(r.list_number) parts.push(`Lista ${r.list_number}`);
     if(r.option_number) parts.push(`Opción ${r.option_number}`);
     return `${r.candidate_name} — ${parts.join(' · ')}`;
@@ -68,8 +66,15 @@
       status.innerHTML = row.access_email
         ? `<span class="accessState pending">Acceso pendiente</span><small>${esc(row.access_email)}</small>`
         : '<span class="accessState neutral">Sin acceso asignado</span>';
-      setTimeout(() => email.focus(), 0);
     }
+  }
+
+  function reasonText(reason, data){
+    if(reason === 'not_authorized') return 'La sesión de administrador venció. Cerrá sesión e ingresá nuevamente.';
+    if(reason === 'invalid_email') return 'El correo ingresado no es válido.';
+    if(reason === 'candidate_not_found') return 'No se encontró ese candidato.';
+    if(reason === 'account_already_active') return `La cuenta ya está activa${data?.email ? ` con ${data.email}` : ''}.`;
+    return 'No se pudo guardar el acceso.';
   }
 
   async function saveAccess(){
@@ -83,22 +88,41 @@
 
     btn.disabled = true;
     msg.textContent = 'Guardando acceso…';
+
     try{
-      const {data,error} = await client.rpc('vote_admin_set_candidate_access', {p_candidate_id: row.candidate_id, p_email: email});
-      if(error) throw error;
-      if(!data?.ok){
-        if(data?.reason === 'account_already_active') msg.textContent = `La cuenta ya está activa${data.email ? ` con ${data.email}` : ''}.`;
-        else msg.textContent = 'No se pudo guardar el acceso.';
-      } else {
-        msg.textContent = `Acceso guardado para ${data.candidate}.`;
-        await loadStatus();
-        renderState();
+      const { data: sessionData } = await client.auth.getSession();
+      if(!sessionData?.session){
+        msg.textContent = 'La sesión de administrador venció. Cerrá sesión e ingresá nuevamente.';
+        return;
       }
+
+      const {data,error} = await client.rpc('vote_admin_set_candidate_access', {
+        p_candidate_id: row.candidate_id,
+        p_email: email
+      });
+
+      if(error){
+        console.error('vote_admin_set_candidate_access', error);
+        msg.textContent = error.message ? `No se pudo guardar: ${error.message}` : 'No se pudo guardar el acceso.';
+        return;
+      }
+
+      if(!data?.ok){
+        msg.textContent = reasonText(data?.reason, data);
+        return;
+      }
+
+      msg.textContent = `Acceso guardado para ${data.candidate}.`;
+      await loadStatus();
+      const selector = document.getElementById('accessCandidateV4');
+      if(selector) selector.value = row.candidate_id;
+      renderState();
     } catch(err){
       console.error(err);
-      msg.textContent = 'No se pudo guardar el acceso.';
+      msg.textContent = err?.message ? `No se pudo guardar: ${err.message}` : 'No se pudo guardar el acceso.';
     } finally {
-      if(!selectedRow()?.account_active) btn.disabled = false;
+      const current = selectedRow();
+      if(btn && !current?.account_active) btn.disabled = false;
     }
   }
 
@@ -108,6 +132,7 @@
     const card = panel?.querySelector('.card');
     if(!card) return;
     if(card.dataset.accessV4 === '1' && mountedCard === card) return;
+
     mountedCard = card;
     card.dataset.accessV4 = '1';
     card.classList.add('accessManagerCardV4');
@@ -116,7 +141,7 @@
         <div>
           <p class="eyebrow">ACCESO DE CANDIDATOS</p>
           <h3>Habilitar inicio de sesión</h3>
-          <p class="muted">No crea una nueva candidatura. Solo habilita el acceso de un candidato que ya existe.</p>
+          <p class="muted">Seleccioná un candidato existente y asignale su correo de acceso.</p>
         </div>
       </div>
       <div class="accessV4Grid">
@@ -131,10 +156,7 @@
       </div>
       <div id="accessStateV4" class="accessStateWrap"><span class="accessState neutral">Seleccioná un candidato</span></div>
       <button id="accessSaveV4" class="btn accessSaveV4" type="button" disabled>Guardar acceso</button>
-      <p id="accessMsgV4" class="muted accessMsgV4"></p>
-      <div class="accessHowTo">
-        <strong>Después:</strong> el candidato entra en <b>Acceso candidatos</b>, pulsa <b>Activar cuenta</b>, usa este mismo correo y elige su contraseña. Luego ya inicia sesión normalmente.
-      </div>`;
+      <p id="accessMsgV4" class="muted accessMsgV4"></p>`;
 
     document.getElementById('accessCandidateV4').addEventListener('change', renderState);
     document.getElementById('accessSaveV4').addEventListener('click', saveAccess);
@@ -146,13 +168,6 @@
     const auth = document.getElementById('authView');
     const title = auth?.querySelector('h2');
     if(title) title.textContent = 'Acceso privado';
-    if(auth && !document.getElementById('activationHelp')){
-      const p = document.createElement('p');
-      p.id = 'activationHelp';
-      p.className = 'muted activationHelp';
-      p.textContent = 'Si es tu primera vez, usá el correo que te asignó el administrador y elegí tu contraseña en “Activar cuenta”.';
-      auth.querySelector('.card')?.appendChild(p);
-    }
   }
 
   async function ensure(){
