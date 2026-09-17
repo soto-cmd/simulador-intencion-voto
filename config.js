@@ -4,7 +4,7 @@ window.APP_CONFIG = {
 };
 
 window.addEventListener('DOMContentLoaded', () => {
-  for (const src of ['referral.js', 'sprite-helper.js']) {
+  for (const src of ['referral.js', 'sprite-helper.js', 'candidate-dashboard.js']) {
     const script = document.createElement('script');
     script.src = src;
     script.defer = true;
