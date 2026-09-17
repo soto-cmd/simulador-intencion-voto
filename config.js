@@ -4,14 +4,14 @@ window.APP_CONFIG = {
 };
 
 window.addEventListener('DOMContentLoaded', () => {
-  for (const href of ['candidate-access.css?v=20260917d', 'admin-tabs-v2.css?v=20260917d']) {
+  for (const href of ['candidate-access.css?v=20260917e', 'admin-tabs-v2.css?v=20260917e']) {
     const style = document.createElement('link');
     style.rel = 'stylesheet';
     style.href = href;
     document.head.appendChild(style);
   }
 
-  for (const src of ['referral.js?v=20260917d', 'sprite-helper.js?v=20260917d', 'candidate-dashboard.js?v=20260917d', 'admin-tabs-v2.js?v=20260917d', 'admin-access-direct.js?v=20260917d']) {
+  for (const src of ['referral.js?v=20260917e', 'sprite-helper.js?v=20260917e', 'candidate-dashboard.js?v=20260917e', 'admin-tabs-v2.js?v=20260917e', 'admin-access-direct.js?v=20260917e', 'candidate-auth-no-email.js?v=20260917e']) {
     const script = document.createElement('script');
     script.src = src;
     script.defer = true;
