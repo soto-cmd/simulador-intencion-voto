@@ -12,6 +12,18 @@
     return `${c.name} — ${parts.join(' · ')}`;
   }
 
+  function ensureDurationField(){
+    if(document.getElementById('candidateAccessDays')) return;
+    const email = document.getElementById('candidateAccessEmail');
+    if(!email) return;
+    const parent = email.parentElement;
+    if(!parent) return;
+    const wrap = document.createElement('div');
+    wrap.style.gridColumn = '1/-1';
+    wrap.innerHTML = '<label for="candidateAccessDays">Duración del acceso</label><select id="candidateAccessDays" disabled><option value="3">3 días · prueba</option><option value="7">7 días</option><option value="30">30 días · 1 mes</option><option value="60">60 días · 2 meses</option><option value="90">90 días · 3 meses</option></select>';
+    parent.insertAdjacentElement('afterend', wrap);
+  }
+
   function ensureCodeBox(){
     const card = document.getElementById('candidateAccessAdminCard');
     if(!card || document.getElementById('candidateActivationCodeBox')) return;
@@ -64,7 +76,7 @@
   }
 
   async function loadCandidateStatus(){
-    ensureCodeBox(); hideCode();
+    ensureDurationField(); ensureCodeBox(); hideCode();
     const select = document.getElementById('existingCandidateSelect');
     const email = document.getElementById('candidateAccessEmail');
     const status = document.getElementById('candidateAccessStatus');
@@ -113,7 +125,7 @@
   }
 
   async function saveAccess(){
-    ensureCodeBox(); hideCode();
+    ensureDurationField(); ensureCodeBox(); hideCode();
     const candidateId = document.getElementById('existingCandidateSelect')?.value || '';
     const emailEl = document.getElementById('candidateAccessEmail');
     const daysEl = document.getElementById('candidateAccessDays');
@@ -159,7 +171,7 @@
   async function init(){
     const select = document.getElementById('existingCandidateSelect');
     if(!select) return;
-    ensureCodeBox();
+    ensureDurationField(); ensureCodeBox();
     try{
       await loadCandidates();
       select.addEventListener('change', loadCandidateStatus);
