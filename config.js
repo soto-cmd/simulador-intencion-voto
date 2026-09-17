@@ -4,12 +4,14 @@ window.APP_CONFIG = {
 };
 
 window.addEventListener('DOMContentLoaded', () => {
-  const style = document.createElement('link');
-  style.rel = 'stylesheet';
-  style.href = 'candidate-access.css';
-  document.head.appendChild(style);
+  for (const href of ['candidate-access.css', 'admin-layout.css']) {
+    const style = document.createElement('link');
+    style.rel = 'stylesheet';
+    style.href = href;
+    document.head.appendChild(style);
+  }
 
-  for (const src of ['referral.js', 'sprite-helper.js', 'candidate-dashboard.js']) {
+  for (const src of ['referral.js', 'sprite-helper.js', 'candidate-dashboard.js', 'admin-layout.js']) {
     const script = document.createElement('script');
     script.src = src;
     script.defer = true;
