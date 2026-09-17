@@ -1,5 +1,4 @@
 (() => {
-  const client = supabase.createClient(window.APP_CONFIG.SUPABASE_URL, window.APP_CONFIG.SUPABASE_KEY);
   let currentTab = 'resumen';
   let started = false;
 
@@ -49,6 +48,7 @@
   }
 
   function applyTab(){
+    if(window.__appRole !== 'admin') return;
     const nav = ensureNav();
     if(!nav) return;
     labelSections();
@@ -64,17 +64,9 @@
     }
   }
 
-  async function activateIfAdmin(){
+  function activate(){
     const dash = document.getElementById('dashboardView');
-    if(!dash || dash.classList.contains('hidden')) return;
-    const {data:profileData} = await client.rpc('vote_my_profile');
-    const profile = Array.isArray(profileData) ? profileData[0] : profileData;
-    const nav = document.getElementById('adminTabsV2');
-    if(profile?.role !== 'admin'){
-      if(nav) nav.remove();
-      document.querySelectorAll('#dashboardView [data-admin-section]').forEach(el => el.style.display='');
-      return;
-    }
+    if(!dash || dash.classList.contains('hidden') || window.__appRole !== 'admin') return;
     ensureNav();
     applyTab();
   }
@@ -84,15 +76,12 @@
     started = true;
     const dash = document.getElementById('dashboardView');
     if(!dash) return;
-    const observer = new MutationObserver(() => {
-      clearTimeout(start._t);
-      start._t = setTimeout(activateIfAdmin, 80);
-    });
-    observer.observe(dash,{childList:true,subtree:true,attributes:true,attributeFilter:['class']});
-    document.getElementById('signInBtn')?.addEventListener('click',()=>setTimeout(activateIfAdmin,650));
-    setTimeout(activateIfAdmin,400);
+    const observer = new MutationObserver(() => requestAnimationFrame(activate));
+    observer.observe(dash,{attributes:true,attributeFilter:['class']});
+    window.addEventListener('dashboard:loaded', activate);
+    setTimeout(activate,80);
   }
 
-  if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start);
+  if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start, {once:true});
   else start();
 })();
