@@ -16,25 +16,28 @@
 #cancelAuthBtn{background:#fff!important}
 #authView #authMsg{min-height:22px;margin-bottom:0;color:#a61b1b;font-size:13px}
 
-.candidateVisualHero{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(260px,.7fr);gap:18px;margin-bottom:18px}
-.candidateIdentityCard,.candidateChartCard{background:#fff;border:1px solid #d8dee8;border-radius:20px;box-shadow:0 8px 24px rgba(15,23,42,.07)}
-.candidateIdentityCard{display:flex;align-items:center;gap:20px;padding:22px;position:relative;overflow:hidden}
-.candidateIdentityCard::before{content:"";position:absolute;inset:0 auto 0 0;width:9px;background:var(--candidate-color,#1738cf)}
-.candidateIdentityPhoto{width:110px;height:110px;border-radius:18px;background:#f8fafc;overflow:hidden;display:grid;place-items:center;border:1px solid #e2e8f0;flex:0 0 110px}
-.candidateIdentityPhoto img{width:100%;height:100%;object-fit:contain;object-position:center bottom}
-.candidateIdentityText{min-width:0}
-.candidateIdentityText .candidateRole{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:#64748b;font-weight:800;margin-bottom:6px}
-.candidateIdentityText h3{font-size:28px;line-height:1.05;letter-spacing:-.035em;margin:0 0 8px;color:#0f274d}
-.candidateIdentityMeta{display:flex;gap:8px;flex-wrap:wrap}
-.candidateIdentityMeta span{display:inline-flex;align-items:center;min-height:28px;padding:0 10px;border-radius:999px;background:#f1f5f9;color:#334155;font-size:12px;font-weight:750}
-.candidateIdentityMeta .partyChip{background:color-mix(in srgb,var(--candidate-color,#1738cf) 12%,#fff);color:var(--candidate-color,#1738cf);border:1px solid color-mix(in srgb,var(--candidate-color,#1738cf) 24%,#fff)}
+.candidateVisualHero{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(300px,.7fr);gap:20px;margin-bottom:20px}
+.candidateIdentityCard,.candidateChartCard{background:#fff;border:1px solid #d8dee8;border-radius:22px;box-shadow:0 10px 28px rgba(15,23,42,.075)}
+.candidateIdentityCard{display:flex;align-items:center;gap:26px;padding:28px 30px;position:relative;overflow:hidden;min-height:208px}
+.candidateIdentityCard::before{content:"";position:absolute;inset:0 auto 0 0;width:10px;background:var(--candidate-color,#1738cf)}
+.candidateIdentityPhoto{width:160px;height:160px;border-radius:22px;background:#fff;overflow:hidden;display:grid;place-items:center;border:1px solid #d9e0e9;flex:0 0 160px;box-shadow:0 8px 22px rgba(15,23,42,.08)}
+.candidateIdentityPhoto>img,.candidateIdentityPhoto img{width:100%!important;height:100%!important;max-width:100%!important;object-fit:contain!important;object-position:center bottom!important;background:#fff}
+.candidateIdentityPhoto>div{width:100%!important;height:100%!important;max-width:100%!important}
+.candidateIdentityText{min-width:0;flex:1}
+.candidateIdentityText .candidateRole{font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:#64748b;font-weight:900;margin-bottom:8px}
+.candidateIdentityText h3{font-size:32px;line-height:1.04;letter-spacing:-.04em;margin:0 0 16px;color:#0f274d}
+.candidateIdentityMeta{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.candidateIdentityMeta span{display:inline-flex;align-items:center;justify-content:center;min-height:34px;padding:0 13px;border-radius:999px;background:#f1f5f9;color:#334155;font-size:13px;font-weight:800;border:1px solid #e1e7ef}
+.candidateIdentityMeta .partyChip{background:color-mix(in srgb,var(--candidate-color,#1738cf) 12%,#fff);color:var(--candidate-color,#1738cf);border:1px solid color-mix(in srgb,var(--candidate-color,#1738cf) 24%,#fff);font-size:13px}
+.candidateIdentityMeta .listChip,.candidateIdentityMeta .optionChip{min-height:46px;padding:0 18px;border-radius:14px;background:#eef4ff;color:#10346d;border:1px solid #cbd8eb;font-size:20px;font-weight:950;letter-spacing:-.02em;box-shadow:0 4px 10px rgba(15,39,77,.06)}
+.candidateIdentityMeta .optionChip{background:color-mix(in srgb,var(--candidate-color,#1738cf) 10%,#fff);color:var(--candidate-color,#1738cf);border-color:color-mix(in srgb,var(--candidate-color,#1738cf) 25%,#dbe3ef)}
 
-.candidateChartCard{padding:20px;display:grid;grid-template-columns:145px 1fr;gap:18px;align-items:center}
-.candidateDonut{width:138px;height:138px;border-radius:50%;display:grid;place-items:center;background:conic-gradient(var(--candidate-color,#1738cf) calc(var(--candidate-pct,0)*1%),#e8edf3 0);position:relative}
-.candidateDonut::after{content:"";position:absolute;width:96px;height:96px;border-radius:50%;background:#fff;box-shadow:inset 0 0 0 1px #eef2f6}
-.candidateDonutValue{position:relative;z-index:1;text-align:center;font-size:30px;font-weight:900;letter-spacing:-.05em;color:#0f274d}
+.candidateChartCard{padding:22px;display:grid;grid-template-columns:150px 1fr;gap:20px;align-items:center}
+.candidateDonut{width:142px;height:142px;border-radius:50%;display:grid;place-items:center;background:conic-gradient(var(--candidate-color,#1738cf) calc(var(--candidate-pct,0)*1%),#e8edf3 0);position:relative}
+.candidateDonut::after{content:"";position:absolute;width:98px;height:98px;border-radius:50%;background:#fff;box-shadow:inset 0 0 0 1px #eef2f6}
+.candidateDonutValue{position:relative;z-index:1;text-align:center;font-size:31px;font-weight:900;letter-spacing:-.05em;color:#0f274d}
 .candidateDonutValue small{display:block;font-size:10px;line-height:1.1;letter-spacing:.06em;text-transform:uppercase;color:#64748b;margin-top:2px}
-.candidateChartInfo h4{font-size:16px;margin:0 0 14px;color:#0f274d}
+.candidateChartInfo h4{font-size:17px;margin:0 0 14px;color:#0f274d}
 .candidateMetric{margin:12px 0}
 .candidateMetricHead{display:flex;justify-content:space-between;gap:10px;font-size:12px;font-weight:750;color:#475569;margin-bottom:6px}
 .candidateMetricTrack{height:11px;border-radius:999px;background:#e9eef4;overflow:hidden}
@@ -46,5 +49,6 @@
 #dashboardView.candidateMode .statCard::before{content:"";position:absolute;left:0;top:0;bottom:0;width:5px;background:var(--candidate-color,#1738cf)}
 #dashboardView.candidateMode .barFill{background:var(--candidate-color,#1738cf)!important}
 
-@media(max-width:900px){.candidateVisualHero{grid-template-columns:1fr}.candidateChartCard{grid-template-columns:120px 1fr}.candidateDonut{width:118px;height:118px}.candidateDonut::after{width:82px;height:82px}#dashboardView.candidateMode .stats{grid-template-columns:repeat(2,minmax(0,1fr))}}
-@media(max-width:620px){#authView h2{font-size:28px}#authView .eyebrow,#authView h2{padding-left:22px;padding-right:22px}#authView label,#authView input,#authView .actions,#authView #authMsg{margin-left:22px;margin-right:22px}#authView input{width:calc(100% - 44px)}.candidateIdentityCard{align-items:flex-start;gap:14px}.candidateIdentityPhoto{width:82px;height:82px;flex-basis:82px}.candidateIdentityText h3{font-size:22px}.candidateChartCard{grid-template-columns:1fr;text-align:center}.candidateDonut{margin:0 auto}#dashboardView.candidateMode .stats{grid-template-columns:1fr}}
+@media(max-width:900px){.candidateVisualHero{grid-template-columns:1fr}.candidateIdentityPhoto{width:145px;height:145px;flex-basis:145px}.candidateChartCard{grid-template-columns:130px 1fr}.candidateDonut{width:124px;height:124px}.candidateDonut::after{width:86px;height:86px}#dashboardView.candidateMode .stats{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:620px){#authView h2{font-size:28px}#authView .eyebrow,#authView h2{padding-left:22px;padding-right:22px}#authView label,#authView input,#authView .actions,#authView #authMsg{margin-left:22px;margin-right:22px}#authView input{width:calc(100% - 44px)}.candidateIdentityCard{align-items:center;gap:16px;padding:20px}.candidateIdentityPhoto{width:112px;height:112px;flex-basis:112px;border-radius:18px}.candidateIdentityText h3{font-size:23px;margin-bottom:12px}.candidateIdentityMeta{gap:7px}.candidateIdentityMeta span{font-size:11px;min-height:30px;padding:0 10px}.candidateIdentityMeta .listChip,.candidateIdentityMeta .optionChip{font-size:16px;min-height:40px;padding:0 13px;border-radius:12px}.candidateChartCard{grid-template-columns:1fr;text-align:center}.candidateDonut{margin:0 auto}#dashboardView.candidateMode .stats{grid-template-columns:1fr}}
+@media(max-width:430px){.candidateIdentityCard{align-items:flex-start;flex-direction:column}.candidateIdentityPhoto{width:138px;height:138px;flex-basis:138px}.candidateIdentityText h3{font-size:26px}}
