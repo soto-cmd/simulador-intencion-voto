@@ -4,9 +4,10 @@ window.APP_CONFIG = {
 };
 
 (() => {
-  const V = '20260917t';
+  const V = '20260917u';
   let authPromise = null;
   let rolePromise = null;
+  let previewPromise = null;
   let helperClient = null;
 
   function addStyle(href){
@@ -52,6 +53,16 @@ window.APP_CONFIG = {
     return authPromise;
   }
 
+  function loadAdminPreviewFast(){
+    if(previewPromise) return previewPromise;
+    previewPromise = addScript(`admin-preview-fast.js?v=${V}`).catch(err => {
+      previewPromise = null;
+      console.error('admin preview fast',err);
+      throw err;
+    });
+    return previewPromise;
+  }
+
   async function loadRoleModules(role){
     if(!role) return;
     window.__appRole = role;
@@ -65,8 +76,7 @@ window.APP_CONFIG = {
         for(const src of [
           `admin-tabs-v2.js?v=${V}`,
           `admin-access-direct.js?v=${V}`,
-          `admin-candidate-preview.js?v=${V}`,
-          `admin-preview-fast.js?v=${V}`
+          `admin-candidate-preview.js?v=${V}`
         ]){
           try { await addScript(src); } catch(err){ console.error('admin module', src, err); }
         }
@@ -94,6 +104,7 @@ window.APP_CONFIG = {
 
   window.ensurePrivateModules = loadAuthModule;
   window.ensureRoleModules = loadRoleModules;
+  window.ensureAdminPreviewFast = loadAdminPreviewFast;
 
   async function boot(){
     loadPublicModules();
