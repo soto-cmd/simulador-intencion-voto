@@ -14,7 +14,11 @@
       <div class="brandMark shield">SV</div>
       <div><strong>Simulador de intención de voto</strong><span class="badge">No oficial</span></div>
     </div>
-    <div class="electionMeta"><span><strong>Elección:</strong> Elecciones municipales</span><span><strong>Departamento:</strong> Misiones</span><span><strong>Distrito:</strong> Santa María de Fe</span></div>
+    <div class="electionMeta">
+      <span><strong>Elección:</strong> Elecciones municipales</span>
+      <span><strong>Departamento:</strong> Misiones</span>
+      <span><strong>Distrito:</strong> Santa María de Fe</span>
+    </div>
     <button id="loginBtn" class="btn secondary">Acceso candidatos</button>
   </header>
 
@@ -25,6 +29,7 @@
         <h1>Simulá tu intención de voto</h1>
         <p>Completá los datos de participación y luego realizá una simulación similar al flujo de votación: Intendente municipal, lista de Junta municipal y candidato a Junta. La cédula se usa únicamente para evitar participaciones duplicadas y no queda vinculada a tu voto.</p>
       </div>
+
       <div id="registrationCard" class="card formCard">
         <h2>Datos de participación</h2>
         <div class="formGrid">
@@ -40,14 +45,30 @@
 
       <section id="ballotSection" class="hidden">
         <div class="ballotShell">
-          <div class="ballotTitleBar"><div class="ballotTitleMain" id="ballotStepTitle">Candidatos a Intendente municipal</div><div class="ballotTitleSub" id="ballotStepSub">Elegí una opción para continuar.</div></div>
-          <div id="progressPills" class="progressPills"><span class="progressPill active">1. Intendente</span><span class="progressPill">2. Lista de Junta</span><span class="progressPill">3. Candidato a Junta</span><span class="progressPill">4. Confirmación</span></div>
+          <div class="ballotTitleBar">
+            <div class="ballotTitleMain" id="ballotStepTitle">Candidatos a Intendente municipal</div>
+            <div class="ballotTitleSub" id="ballotStepSub">Elegí una opción para continuar.</div>
+          </div>
+          <div id="progressPills" class="progressPills">
+            <span class="progressPill active">1. Intendente</span>
+            <span class="progressPill">2. Lista de Junta</span>
+            <span class="progressPill">3. Candidato a Junta</span>
+            <span class="progressPill">4. Confirmación</span>
+          </div>
+
           <div id="stepIntendente" class="ballotStep hidden"><div id="intendenteGrid" class="ballotGrid ballotGridTwo"></div></div>
           <div id="stepJuntaList" class="ballotStep hidden"><div id="juntaListGrid" class="ballotGrid ballotGridTwo"></div></div>
           <div id="stepJuntaCandidate" class="ballotStep hidden"><div class="panelHeaderCard" id="juntaListHeading"></div><div id="juntaCandidateGrid" class="ballotGrid ballotGridCandidates"></div></div>
           <div id="stepSummary" class="ballotStep hidden">
             <div class="summaryHeader">Opciones seleccionadas</div>
-            <div class="summaryGrid"><div class="summaryChoice" id="summaryIntendente"></div><div class="summaryChoice" id="summaryJunta"></div><div class="summaryActionsCard"><button id="restartSelectionBtn" class="summaryAction orange">Reiniciar selección</button><button id="submitBallotBtn" class="summaryAction green">Registrar simulación</button></div></div>
+            <div class="summaryGrid">
+              <div class="summaryChoice" id="summaryIntendente"></div>
+              <div class="summaryChoice" id="summaryJunta"></div>
+              <div class="summaryActionsCard">
+                <button id="restartSelectionBtn" class="summaryAction orange">Reiniciar selección</button>
+                <button id="submitBallotBtn" class="summaryAction green">Registrar simulación</button>
+              </div>
+            </div>
           </div>
           <div class="ballotFooterActions"><button id="backStepBtn" class="btn ghost hidden">Volver atrás</button><button id="restartStepBtn" class="btn secondary hidden">Reiniciar</button></div>
         </div>
@@ -64,6 +85,16 @@
     <section id="dashboardView" class="hidden">
       <div class="dashboardHead"><div><p class="eyebrow">PANEL PRIVADO</p><h2 id="dashboardTitle">Panel</h2></div><button id="logoutBtn" class="btn ghost">Cerrar sesión</button></div>
       <div id="statsGrid" class="stats"></div>
+
+      <div id="candidateLinkBox" class="card hidden candidateLinkBox">
+        <h3>Tu enlace único para participantes</h3>
+        <p class="muted">Compartí este enlace con tus participantes. El sistema cuenta cuántos ingresan desde tu enlace, sin vincularlo con la opción específica que seleccionen.</p>
+        <div class="candidateLinkRow">
+          <input id="candidateLinkInput" readonly />
+          <button id="copyCandidateLinkBtn" class="btn secondary">Copiar enlace</button>
+        </div>
+      </div>
+
       <div class="dashboardGrid"><div class="card"><h3>Evolución últimos 7 días</h3><div id="history"></div></div><div class="card"><h3>Perfil general de participantes</h3><p class="muted">Estos datos corresponden al conjunto total de participantes y no están cruzados con una candidatura específica.</p><div id="demographics"></div></div></div>
       <div id="adminPanel" class="hidden">
         <div class="card"><h3>Agregar candidatura</h3><div class="formGrid">
