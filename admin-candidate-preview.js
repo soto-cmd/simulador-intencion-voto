@@ -4,6 +4,7 @@
   const pct = v => `${Number(v || 0).toFixed(1).replace('.0','')}%`;
   const fmt = v => v ? new Date(v).toLocaleString('es-PY',{dateStyle:'medium',timeStyle:'short'}) : 'Sin vencimiento';
   let candidates = [];
+  let observerStarted = false;
 
   function imageMarkup(c){
     const raw = c?.photo_url || '';
@@ -36,7 +37,6 @@
     section=document.createElement('section');
     section.id='adminCandidatePreview';
     section.dataset.adminSection='vista-candidato';
-    section.style.display='none';
     section.innerHTML=`
       <div class="card adminPreviewChooser">
         <div><p class="eyebrow">VISTA DEL CANDIDATO</p><h3>Ver el panel como lo ve un candidato</h3><p class="muted">Seleccioná una candidatura. Esta vista es de solo lectura y no inicia sesión como el candidato.</p></div>
@@ -48,6 +48,8 @@
     else dash.appendChild(section);
     section.querySelector('#adminPreviewCandidateSelect')?.addEventListener('change',renderSelected);
     section.querySelector('#adminPreviewRefresh')?.addEventListener('click',renderSelected);
+    const previewTab = document.querySelector('[data-admin-tab="vista-candidato"]');
+    section.style.display = previewTab?.classList.contains('active') ? '' : 'none';
     return section;
   }
 
@@ -57,7 +59,9 @@
     candidates=data||[];
     const select=document.getElementById('adminPreviewCandidateSelect');
     if(!select) return;
+    const current=select.value;
     select.innerHTML='<option value="">Seleccionar candidato</option>'+candidates.map(c=>`<option value="${c.id}">${esc(c.name)} · ${c.race_type==='intendente'?'Intendente':'Junta'}${c.list_number?` · Lista ${esc(c.list_number)}`:''}${c.option_number?` · Opción ${esc(c.option_number)}`:''}</option>`).join('');
+    if(current && candidates.some(c=>c.id===current)) select.value=current;
   }
 
   function metricBar(label,value,color){
@@ -141,20 +145,30 @@
   }
 
   async function init(){
-    const section=ensureSection();
-    if(!section) return;
+    const dash=document.getElementById('dashboardView');
+    if(!dash || dash.classList.contains('hidden')) return;
     try{
       const {data:profileData}=await previewDb.rpc('vote_my_profile');
       const profile=Array.isArray(profileData)?profileData[0]:profileData;
       if(profile?.role!=='admin') return;
+      const section=ensureSection();
+      if(!section) return;
       await loadCandidates();
+      if(document.querySelector('[data-admin-tab="vista-candidato"]')?.classList.contains('active')) section.style.display='';
     }catch(err){ console.error('admin preview init',err); }
   }
 
-  const observer=new MutationObserver(()=>setTimeout(init,120));
-  window.addEventListener('DOMContentLoaded',()=>{
+  function start(){
+    if(observerStarted) return;
+    observerStarted=true;
     const dash=document.getElementById('dashboardView');
-    if(dash) observer.observe(dash,{attributes:true,attributeFilter:['class']});
-    setTimeout(init,700);
-  });
+    if(dash){
+      const observer=new MutationObserver(()=>setTimeout(init,120));
+      observer.observe(dash,{attributes:true,attributeFilter:['class'],childList:true,subtree:false});
+    }
+    setTimeout(init,250);
+  }
+
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',start,{once:true});
+  else start();
 })();
