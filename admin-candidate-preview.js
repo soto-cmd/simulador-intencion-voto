@@ -7,14 +7,22 @@
   let selectedCandidateId = '';
   let requestSeq = 0;
 
+  function spriteMarkup(c,index,asset){
+    if(!Number.isInteger(index) || index < 0 || index > 11) return '';
+    const col=index%4,row=Math.floor(index/4);
+    const x=(col/3)*100,y=(row/2)*100;
+    return `<div class="candidateSpritePortrait adminPreviewSprite" role="img" aria-label="${esc(c?.name||'')}" style="width:100%;height:100%;background:#fff url('./${asset}') no-repeat ${x}% ${y}%;background-size:400% 300%;background-position:${x}% ${y}%"></div>`;
+  }
+
   function imageMarkup(c){
     const raw = c?.photo_url || '';
     if(raw.startsWith('sprite:')){
-      const i = Number(raw.slice(7));
-      if(Number.isInteger(i) && i >= 0 && i < 12){
-        const col=i%4,row=Math.floor(i/4);
-        return `<div class="spritePortrait adminPreviewSprite" style="--sprite-x:${col};--sprite-y:${row}" role="img" aria-label="${esc(c.name)}"></div>`;
-      }
+      const html=spriteMarkup(c,Number(raw.slice(7)),'assets/candidates/anr-sprite.webp');
+      if(html) return html;
+    }
+    if(raw.startsWith('sprite-plra:')){
+      const html=spriteMarkup(c,Number(raw.slice(12)),'assets/candidates/plra-sprite.webp');
+      if(html) return html;
     }
     if(raw){
       const url = /^https?:\/\//i.test(raw) ? raw : raw.startsWith('/') ? `.${raw}` : raw.startsWith('assets/') ? `./${raw}` : raw;
