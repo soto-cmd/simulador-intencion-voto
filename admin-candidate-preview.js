@@ -4,7 +4,7 @@
   const pct = v => `${Number(v || 0).toFixed(1).replace('.0','')}%`;
   const fmt = v => v ? new Date(v).toLocaleString('es-PY',{dateStyle:'medium',timeStyle:'short'}) : 'Sin vencimiento';
   let candidates = [];
-  let observerStarted = false;
+  let selectedCandidateId = '';
 
   function imageMarkup(c){
     const raw = c?.photo_url || '';
@@ -29,6 +29,10 @@
     return items.length ? `<div class="candidateSocialPublic">${items.join('')}</div>` : '<p class="muted">Este candidato todavía no cargó redes sociales.</p>';
   }
 
+  function candidateLabel(c){
+    return `${c.name} · ${c.race_type==='intendente'?'Intendente':'Junta'}${c.list_number?` · Lista ${c.list_number}`:''}${c.option_number?` · Opción ${c.option_number}`:''}`;
+  }
+
   function ensureSection(){
     let section=document.getElementById('adminCandidatePreview');
     if(section) return section;
@@ -37,31 +41,69 @@
     section=document.createElement('section');
     section.id='adminCandidatePreview';
     section.dataset.adminSection='vista-candidato';
+    section.style.display='none';
     section.innerHTML=`
       <div class="card adminPreviewChooser">
         <div><p class="eyebrow">VISTA DEL CANDIDATO</p><h3>Ver el panel como lo ve un candidato</h3><p class="muted">Seleccioná una candidatura. Esta vista es de solo lectura y no inicia sesión como el candidato.</p></div>
-        <div class="adminPreviewSelectRow"><select id="adminPreviewCandidateSelect"><option value="">Seleccionar candidato</option></select><button id="adminPreviewRefresh" type="button" class="btn secondary">Actualizar vista</button></div>
+        <div class="adminPreviewSelectRow">
+          <div class="candidatePicker" id="adminCandidatePicker">
+            <button id="adminCandidatePickerButton" class="candidatePickerButton" type="button" aria-expanded="false"><span>Seleccionar candidato</span><b>⌄</b></button>
+            <div id="adminCandidatePickerMenu" class="candidatePickerMenu hidden">
+              <div class="candidatePickerSearchWrap"><input id="adminCandidatePickerSearch" type="search" placeholder="Buscar candidato…" autocomplete="off"></div>
+              <div id="adminCandidatePickerList" class="candidatePickerList"></div>
+            </div>
+          </div>
+          <button id="adminPreviewRefresh" type="button" class="btn secondary">Actualizar vista</button>
+        </div>
       </div>
       <div id="adminPreviewContent"></div>`;
     const adminPanel=document.getElementById('adminPanel');
     if(adminPanel) adminPanel.insertAdjacentElement('beforebegin',section);
     else dash.appendChild(section);
-    section.querySelector('#adminPreviewCandidateSelect')?.addEventListener('change',renderSelected);
+
+    const pickerBtn=section.querySelector('#adminCandidatePickerButton');
+    const menu=section.querySelector('#adminCandidatePickerMenu');
+    const search=section.querySelector('#adminCandidatePickerSearch');
+    pickerBtn?.addEventListener('click',()=>{
+      const open=menu?.classList.contains('hidden');
+      menu?.classList.toggle('hidden',!open);
+      pickerBtn.setAttribute('aria-expanded',open?'true':'false');
+      if(open) setTimeout(()=>search?.focus(),20);
+    });
+    search?.addEventListener('input',()=>renderCandidateList(search.value));
     section.querySelector('#adminPreviewRefresh')?.addEventListener('click',renderSelected);
-    const previewTab = document.querySelector('[data-admin-tab="vista-candidato"]');
-    section.style.display = previewTab?.classList.contains('active') ? '' : 'none';
+    document.addEventListener('click',(ev)=>{
+      if(!section.querySelector('#adminCandidatePicker')?.contains(ev.target)){
+        menu?.classList.add('hidden');
+        pickerBtn?.setAttribute('aria-expanded','false');
+      }
+    });
     return section;
+  }
+
+  function renderCandidateList(query=''){
+    const holder=document.getElementById('adminCandidatePickerList');
+    if(!holder) return;
+    const q=String(query||'').trim().toLowerCase();
+    const rows=candidates.filter(c=>candidateLabel(c).toLowerCase().includes(q));
+    holder.innerHTML=rows.length ? rows.map(c=>`<button type="button" class="candidatePickerOption${c.id===selectedCandidateId?' selected':''}" data-candidate-id="${c.id}"><span>${esc(c.name)}</span><small>${c.race_type==='intendente'?'Intendente municipal':'Junta municipal'}${c.list_number?` · Lista ${esc(c.list_number)}`:''}${c.option_number?` · Opción ${esc(c.option_number)}`:''}</small></button>`).join('') : '<div class="candidatePickerEmpty">No se encontraron candidatos.</div>';
+    holder.querySelectorAll('[data-candidate-id]').forEach(btn=>btn.addEventListener('click',()=>{
+      selectedCandidateId=btn.dataset.candidateId;
+      const c=candidates.find(x=>x.id===selectedCandidateId);
+      const mainBtn=document.getElementById('adminCandidatePickerButton');
+      if(mainBtn && c) mainBtn.querySelector('span').textContent=candidateLabel(c);
+      document.getElementById('adminCandidatePickerMenu')?.classList.add('hidden');
+      mainBtn?.setAttribute('aria-expanded','false');
+      renderCandidateList(document.getElementById('adminCandidatePickerSearch')?.value||'');
+      renderSelected();
+    }));
   }
 
   async function loadCandidates(){
     const {data,error}=await previewDb.from('vote_candidates').select('id,name,office,race_type,list_number,option_number,party_name,party_abbr,party_color,photo_url,referral_code,facebook_url,instagram_url,tiktok_url,youtube_url,x_url,whatsapp_url').eq('active',true).order('race_type').order('list_number').order('option_number');
     if(error) throw error;
     candidates=data||[];
-    const select=document.getElementById('adminPreviewCandidateSelect');
-    if(!select) return;
-    const current=select.value;
-    select.innerHTML='<option value="">Seleccionar candidato</option>'+candidates.map(c=>`<option value="${c.id}">${esc(c.name)} · ${c.race_type==='intendente'?'Intendente':'Junta'}${c.list_number?` · Lista ${esc(c.list_number)}`:''}${c.option_number?` · Opción ${esc(c.option_number)}`:''}</option>`).join('');
-    if(current && candidates.some(c=>c.id===current)) select.value=current;
+    renderCandidateList();
   }
 
   function metricBar(label,value,color){
@@ -90,7 +132,7 @@
   }
 
   async function renderSelected(){
-    const id=document.getElementById('adminPreviewCandidateSelect')?.value;
+    const id=selectedCandidateId;
     const holder=document.getElementById('adminPreviewContent');
     if(!holder) return;
     if(!id){ holder.innerHTML=''; return; }
@@ -145,30 +187,21 @@
   }
 
   async function init(){
-    const dash=document.getElementById('dashboardView');
-    if(!dash || dash.classList.contains('hidden')) return;
+    const section=ensureSection();
+    if(!section) return;
     try{
       const {data:profileData}=await previewDb.rpc('vote_my_profile');
       const profile=Array.isArray(profileData)?profileData[0]:profileData;
       if(profile?.role!=='admin') return;
-      const section=ensureSection();
-      if(!section) return;
-      await loadCandidates();
-      if(document.querySelector('[data-admin-tab="vista-candidato"]')?.classList.contains('active')) section.style.display='';
+      if(!candidates.length) await loadCandidates();
     }catch(err){ console.error('admin preview init',err); }
   }
 
+  const observer=new MutationObserver(()=>setTimeout(init,120));
   function start(){
-    if(observerStarted) return;
-    observerStarted=true;
     const dash=document.getElementById('dashboardView');
-    if(dash){
-      const observer=new MutationObserver(()=>setTimeout(init,120));
-      observer.observe(dash,{attributes:true,attributeFilter:['class'],childList:true,subtree:false});
-    }
-    setTimeout(init,250);
+    if(dash) observer.observe(dash,{attributes:true,attributeFilter:['class']});
+    setTimeout(init,350);
   }
-
-  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',start,{once:true});
-  else start();
+  if(document.readyState==='loading') window.addEventListener('DOMContentLoaded',start); else start();
 })();
