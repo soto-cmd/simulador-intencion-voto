@@ -5,24 +5,29 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <meta name="theme-color" content="#3f4348" />
   <title>Simulador de intención de voto</title>
-  <link rel="stylesheet" href="styles.css?v=20260917g" />
-  <link rel="stylesheet" href="polish.css?v=20260917g" />
+  <link rel="stylesheet" href="styles.css?v=20260917h" />
+  <link rel="stylesheet" href="polish.css?v=20260917h" />
   <link rel="stylesheet" href="candidate-ui.css?v=20260917g" />
   <link rel="stylesheet" href="mobile.css?v=20260917a" />
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
-  <header class="topbar topbarElection">
-    <div class="brand electionBrand">
-      <div class="brandMark shield">SV</div>
-      <div><strong>Simulador de intención de voto</strong><span class="badge">No oficial</span></div>
+  <header class="topbar topbarElection topbarParaguay">
+    <div class="pyRibbon" aria-hidden="true"><span></span><span></span><span></span></div>
+    <div class="brand electionBrand brandParaguay">
+      <div class="brandMark shield brandMarkParaguay">
+        <span class="flagPy" aria-hidden="true"><i class="flagRed"></i><i class="flagWhite"><b>●</b></i><i class="flagBlue"></i></span>
+      </div>
+      <div class="brandCopy">
+        <strong>Simulador de intención de voto</strong>
+        <span>Santa María de Fe · Misiones · Paraguay</span>
+      </div>
     </div>
-    <div class="electionMeta">
-      <span><strong>Elección:</strong> Elecciones municipales</span>
-      <span><strong>Departamento:</strong> Misiones</span>
+    <div class="electionMeta electionMetaParaguay">
+      <span><strong>Elección:</strong> Municipales</span>
       <span><strong>Distrito:</strong> Santa María de Fe</span>
     </div>
-    <button id="loginBtn" class="btn secondary">Acceso candidatos</button>
+    <button id="loginBtn" class="btn secondary headerAccessBtn">Acceso candidatos</button>
   </header>
 
   <main class="wrap ballotWrap">
