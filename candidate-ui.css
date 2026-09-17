@@ -1,0 +1,50 @@
+/* Candidate access + visual dashboard */
+#authView.narrow{width:min(860px,calc(100% - 28px));margin:52px auto}
+#authView>.card{position:relative;overflow:hidden;padding:0!important;border:none!important;border-radius:24px!important;box-shadow:0 22px 60px rgba(15,23,42,.18)!important;background:#fff}
+#authView>.card::before{content:"";display:block;height:10px;background:linear-gradient(90deg,#ef1b1b 0 48%,#fff 48% 52%,#1738cf 52% 100%)}
+#authView>.card::after{content:"Acceso seguro para candidatos y administración";display:block;margin:0;padding:0 34px 30px;color:#64748b;font-size:13px}
+#authView .eyebrow{padding:30px 34px 0;margin-bottom:8px;color:#475569;letter-spacing:.14em}
+#authView h2{padding:0 34px;margin:0 0 22px;font-size:34px;line-height:1.05;letter-spacing:-.035em;color:#0f274d}
+#authView label,#authView input,#authView .actions,#authView #authMsg{margin-left:34px;margin-right:34px}
+#authView label{font-size:12px;text-transform:uppercase;letter-spacing:.07em;color:#475569}
+#authView input{width:calc(100% - 68px);min-height:50px;border-radius:13px;background:#f8fafc;border:1px solid #cbd5e1;padding:0 15px;font-size:15px}
+#authView input:focus{background:#fff;border-color:#294d83;box-shadow:0 0 0 4px rgba(41,77,131,.12)}
+#authView .actions{gap:12px;margin-top:24px;margin-bottom:18px}
+#authView .actions .btn{min-height:48px;border-radius:13px;padding:0 20px;font-size:14px;box-shadow:none}
+#signInBtn{background:linear-gradient(180deg,#183a70,#0d254d)!important;min-width:150px}
+#signUpBtn{background:#eef3f9!important;border:1px solid #cbd5e1;color:#12315d!important}
+#cancelAuthBtn{background:#fff!important}
+#authView #authMsg{min-height:22px;margin-bottom:0;color:#a61b1b;font-size:13px}
+
+.candidateVisualHero{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(260px,.7fr);gap:18px;margin-bottom:18px}
+.candidateIdentityCard,.candidateChartCard{background:#fff;border:1px solid #d8dee8;border-radius:20px;box-shadow:0 8px 24px rgba(15,23,42,.07)}
+.candidateIdentityCard{display:flex;align-items:center;gap:20px;padding:22px;position:relative;overflow:hidden}
+.candidateIdentityCard::before{content:"";position:absolute;inset:0 auto 0 0;width:9px;background:var(--candidate-color,#1738cf)}
+.candidateIdentityPhoto{width:110px;height:110px;border-radius:18px;background:#f8fafc;overflow:hidden;display:grid;place-items:center;border:1px solid #e2e8f0;flex:0 0 110px}
+.candidateIdentityPhoto img{width:100%;height:100%;object-fit:contain;object-position:center bottom}
+.candidateIdentityText{min-width:0}
+.candidateIdentityText .candidateRole{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:#64748b;font-weight:800;margin-bottom:6px}
+.candidateIdentityText h3{font-size:28px;line-height:1.05;letter-spacing:-.035em;margin:0 0 8px;color:#0f274d}
+.candidateIdentityMeta{display:flex;gap:8px;flex-wrap:wrap}
+.candidateIdentityMeta span{display:inline-flex;align-items:center;min-height:28px;padding:0 10px;border-radius:999px;background:#f1f5f9;color:#334155;font-size:12px;font-weight:750}
+.candidateIdentityMeta .partyChip{background:color-mix(in srgb,var(--candidate-color,#1738cf) 12%,#fff);color:var(--candidate-color,#1738cf);border:1px solid color-mix(in srgb,var(--candidate-color,#1738cf) 24%,#fff)}
+
+.candidateChartCard{padding:20px;display:grid;grid-template-columns:145px 1fr;gap:18px;align-items:center}
+.candidateDonut{width:138px;height:138px;border-radius:50%;display:grid;place-items:center;background:conic-gradient(var(--candidate-color,#1738cf) calc(var(--candidate-pct,0)*1%),#e8edf3 0);position:relative}
+.candidateDonut::after{content:"";position:absolute;width:96px;height:96px;border-radius:50%;background:#fff;box-shadow:inset 0 0 0 1px #eef2f6}
+.candidateDonutValue{position:relative;z-index:1;text-align:center;font-size:30px;font-weight:900;letter-spacing:-.05em;color:#0f274d}
+.candidateDonutValue small{display:block;font-size:10px;line-height:1.1;letter-spacing:.06em;text-transform:uppercase;color:#64748b;margin-top:2px}
+.candidateChartInfo h4{font-size:16px;margin:0 0 14px;color:#0f274d}
+.candidateMetric{margin:12px 0}
+.candidateMetricHead{display:flex;justify-content:space-between;gap:10px;font-size:12px;font-weight:750;color:#475569;margin-bottom:6px}
+.candidateMetricTrack{height:11px;border-radius:999px;background:#e9eef4;overflow:hidden}
+.candidateMetricFill{height:100%;border-radius:999px;background:var(--candidate-color,#1738cf);width:0}
+
+#dashboardView.candidateMode .dashboardHead{margin-bottom:16px}
+#dashboardView.candidateMode .stats{grid-template-columns:repeat(4,minmax(0,1fr))}
+#dashboardView.candidateMode .statCard{position:relative;overflow:hidden}
+#dashboardView.candidateMode .statCard::before{content:"";position:absolute;left:0;top:0;bottom:0;width:5px;background:var(--candidate-color,#1738cf)}
+#dashboardView.candidateMode .barFill{background:var(--candidate-color,#1738cf)!important}
+
+@media(max-width:900px){.candidateVisualHero{grid-template-columns:1fr}.candidateChartCard{grid-template-columns:120px 1fr}.candidateDonut{width:118px;height:118px}.candidateDonut::after{width:82px;height:82px}#dashboardView.candidateMode .stats{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:620px){#authView h2{font-size:28px}#authView .eyebrow,#authView h2{padding-left:22px;padding-right:22px}#authView label,#authView input,#authView .actions,#authView #authMsg{margin-left:22px;margin-right:22px}#authView input{width:calc(100% - 44px)}.candidateIdentityCard{align-items:flex-start;gap:14px}.candidateIdentityPhoto{width:82px;height:82px;flex-basis:82px}.candidateIdentityText h3{font-size:22px}.candidateChartCard{grid-template-columns:1fr;text-align:center}.candidateDonut{margin:0 auto}#dashboardView.candidateMode .stats{grid-template-columns:1fr}}
