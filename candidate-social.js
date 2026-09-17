@@ -1,8 +1,9 @@
 (() => {
-  const socialDb = supabase.createClient(window.APP_CONFIG.SUPABASE_URL, window.APP_CONFIG.SUPABASE_KEY);
+  const socialDb = (typeof db !== 'undefined' && db) ? db : supabase.createClient(window.APP_CONFIG.SUPABASE_URL, window.APP_CONFIG.SUPABASE_KEY);
   const escSocial = (s='') => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   let rendering = false;
   let started = false;
+  let cachedCandidate = null;
 
   function cleanUrl(value, platform){
     let v = String(value || '').trim();
@@ -15,18 +16,27 @@
     return v;
   }
 
+  function getProfile(){
+    try { return window.currentProfile || (typeof currentProfile !== 'undefined' ? currentProfile : null) || window.__dashboardBundle?.profile || null; }
+    catch { return window.currentProfile || window.__dashboardBundle?.profile || null; }
+  }
+
+  function getLoadedCandidate(profile){
+    if(cachedCandidate?.id === profile?.candidate_id) return cachedCandidate;
+    const bundled = window.__dashboardBundle?.candidate;
+    if(bundled?.id === profile?.candidate_id){ cachedCandidate=bundled; return cachedCandidate; }
+    try{
+      if(typeof candidates !== 'undefined' && Array.isArray(candidates)){
+        const found=candidates.find(c=>c.id===profile?.candidate_id);
+        if(found){ cachedCandidate=found; return found; }
+      }
+    }catch{}
+    return null;
+  }
+
   function socialButtons(c){
-    const defs = [
-      ['facebook_url','Facebook','f'],
-      ['instagram_url','Instagram','◎'],
-      ['tiktok_url','TikTok','♪'],
-      ['youtube_url','YouTube','▶'],
-      ['x_url','X','X'],
-      ['whatsapp_url','WhatsApp','wa']
-    ];
-    const items = defs.filter(([key]) => c?.[key]).map(([key,label,icon]) =>
-      `<a class="candidateSocialButton" href="${escSocial(c[key])}" target="_blank" rel="noopener noreferrer" aria-label="${label}"><span>${icon}</span>${label}</a>`
-    );
+    const defs = [['facebook_url','Facebook','f'],['instagram_url','Instagram','◎'],['tiktok_url','TikTok','♪'],['youtube_url','YouTube','▶'],['x_url','X','X'],['whatsapp_url','WhatsApp','wa']];
+    const items = defs.filter(([key]) => c?.[key]).map(([key,label,icon]) => `<a class="candidateSocialButton" href="${escSocial(c[key])}" target="_blank" rel="noopener noreferrer" aria-label="${label}"><span>${icon}</span>${label}</a>`);
     return items.length ? `<div class="candidateSocialPublic">${items.join('')}</div>` : '<p class="muted candidateSocialEmpty">Todavía no agregaste redes sociales.</p>';
   }
 
@@ -39,21 +49,19 @@
     card.id = 'candidateSocialCard';
     card.className = 'card candidateSocialCard hidden';
     const referral = document.getElementById('referralPanel');
-    if(referral) referral.insertAdjacentElement('afterend', card);
-    else document.getElementById('statsGrid')?.insertAdjacentElement('afterend', card);
+    if(referral) referral.insertAdjacentElement('afterend', card); else document.getElementById('statsGrid')?.insertAdjacentElement('afterend', card);
     return card;
   }
 
-  async function loadCandidate(){
-    const {data:profileData,error:profileError} = await socialDb.rpc('vote_my_profile');
-    if(profileError) throw profileError;
-    const profile = Array.isArray(profileData) ? profileData[0] : profileData;
-    if(!profile || profile.role !== 'candidate' || !profile.candidate_id) return {profile:null,candidate:null};
-    const {data:candidate,error} = await socialDb.from('vote_candidates')
-      .select('id,name,facebook_url,instagram_url,tiktok_url,youtube_url,x_url,whatsapp_url')
-      .eq('id',profile.candidate_id).maybeSingle();
+  async function resolveCandidate(){
+    const profile=getProfile();
+    if(!profile || profile.role!=='candidate' || !profile.candidate_id) return {profile:null,candidate:null};
+    let candidate=getLoadedCandidate(profile);
+    if(candidate) return {profile,candidate};
+    const {data,error}=await socialDb.from('vote_candidates').select('id,name,facebook_url,instagram_url,tiktok_url,youtube_url,x_url,whatsapp_url').eq('id',profile.candidate_id).maybeSingle();
     if(error) throw error;
-    return {profile,candidate};
+    cachedCandidate=data||null;
+    return {profile,candidate:cachedCandidate};
   }
 
   async function saveLinks(candidate){
@@ -72,31 +80,30 @@
     try{
       const {data,error} = await socialDb.rpc('vote_update_my_social_links',payload);
       if(error) throw error;
-      if(!data?.ok){
-        if(msg) msg.textContent = data?.reason === 'access_expired' ? 'Tu acceso está vencido.' : 'No se pudieron guardar los enlaces.';
-        return;
-      }
+      if(!data?.ok){ if(msg) msg.textContent = data?.reason === 'access_expired' ? 'Tu acceso está vencido.' : 'No se pudieron guardar los enlaces.'; return; }
+      Object.assign(candidate, {
+        facebook_url: payload.p_facebook_url, instagram_url: payload.p_instagram_url, tiktok_url: payload.p_tiktok_url,
+        youtube_url: payload.p_youtube_url, x_url: payload.p_x_url, whatsapp_url: payload.p_whatsapp_url
+      });
+      cachedCandidate=candidate;
+      if(window.__dashboardBundle?.candidate?.id===candidate.id) Object.assign(window.__dashboardBundle.candidate,candidate);
       if(msg) msg.textContent = 'Redes sociales actualizadas.';
-      await render(true);
-    }catch(err){
-      console.error('candidate socials',err);
-      if(msg) msg.textContent = 'No se pudieron guardar los enlaces. Revisá que sean válidos.';
-    }finally{ if(btn) btn.disabled = false; }
+      render(true);
+    }catch(err){ console.error('candidate socials',err); if(msg) msg.textContent = 'No se pudieron guardar los enlaces. Revisá que sean válidos.'; }
+    finally{ if(btn) btn.disabled = false; }
   }
 
   async function render(force=false){
-    if(rendering) return;
+    if(rendering || window.__appRole!=='candidate') return;
     const card = ensureCard();
     if(!card) return;
     rendering = true;
     try{
-      const {profile,candidate} = await loadCandidate();
+      const {profile,candidate} = await resolveCandidate();
       if(!profile || !candidate){ card.classList.add('hidden'); return; }
       card.classList.remove('hidden');
       card.innerHTML = `
-        <div class="candidateSocialHead">
-          <div><p class="eyebrow">PERFIL DEL CANDIDATO</p><h3>Redes sociales</h3><p class="muted">Agregá tus enlaces públicos. Se mostrarán a quienes ingresen al simulador desde tu enlace único.</p></div>
-        </div>
+        <div class="candidateSocialHead"><div><p class="eyebrow">PERFIL DEL CANDIDATO</p><h3>Redes sociales</h3><p class="muted">Agregá tus enlaces públicos. Se mostrarán a quienes ingresen al simulador desde tu enlace único.</p></div></div>
         <div id="candidateSocialPreview">${socialButtons(candidate)}</div>
         <div class="candidateSocialForm">
           <div><label for="socialFacebook">Facebook</label><input id="socialFacebook" type="url" placeholder="https://facebook.com/..." value="${escSocial(candidate.facebook_url || '')}"></div>
@@ -115,14 +122,9 @@
   function start(){
     if(started) return;
     started = true;
-    const dash=document.getElementById('dashboardView');
-    if(dash){
-      const observer = new MutationObserver(()=>setTimeout(()=>render(),120));
-      observer.observe(dash,{attributes:true,attributeFilter:['class'],childList:true,subtree:false});
-    }
-    setTimeout(()=>render(),350);
+    window.addEventListener('dashboard:loaded',()=>setTimeout(render,0));
+    setTimeout(render,80);
   }
 
-  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',start,{once:true});
-  else start();
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',start,{once:true}); else start();
 })();
