@@ -1,6 +1,6 @@
 (() => {
-  const client = supabase.createClient(window.APP_CONFIG.SUPABASE_URL, window.APP_CONFIG.SUPABASE_KEY);
-  let candidates = [];
+  const client = (typeof db !== 'undefined' && db) ? db : supabase.createClient(window.APP_CONFIG.SUPABASE_URL, window.APP_CONFIG.SUPABASE_KEY);
+  let candidateRows = [];
   let statusMap = {};
 
   const esc = (s='') => String(s).replace(/[&<>\"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',"'":'&#39;'}[c]));
@@ -60,9 +60,9 @@
   function renderOptions(){
     const select=document.getElementById('existingCandidateSelect');
     if(!select) return;
-    const mayors=candidates.filter(r=>r.race_type==='intendente');
-    const j1=candidates.filter(r=>r.race_type==='junta'&&String(r.list_number)==='1');
-    const j2=candidates.filter(r=>r.race_type==='junta'&&String(r.list_number)==='2');
+    const mayors=candidateRows.filter(r=>r.race_type==='intendente');
+    const j1=candidateRows.filter(r=>r.race_type==='junta'&&String(r.list_number)==='1');
+    const j2=candidateRows.filter(r=>r.race_type==='junta'&&String(r.list_number)==='2');
     let html='<option value="">Seleccionar candidato existente</option>';
     if(mayors.length) html+=`<optgroup label="Intendente municipal">${mayors.map(c=>`<option value="${c.id}">${esc(label(c))}</option>`).join('')}</optgroup>`;
     if(j1.length) html+=`<optgroup label="Junta municipal · Lista 1">${j1.map(c=>`<option value="${c.id}">${esc(label(c))}</option>`).join('')}</optgroup>`;
@@ -71,33 +71,23 @@
   }
 
   async function loadCandidates(){
-    const {data,error}=await client.from('vote_candidates')
-      .select('id,name,race_type,list_number,option_number,display_order')
-      .eq('active',true).order('race_type').order('list_number').order('option_number').order('display_order');
-    if(error) throw error;
-    candidates=data||[];
-    renderOptions();
+    try{
+      if(typeof candidates !== 'undefined' && Array.isArray(candidates) && candidates.length){
+        candidateRows=candidates.filter(c=>c.active!==false).map(c=>({id:c.id,name:c.name,race_type:c.race_type,list_number:c.list_number,option_number:c.option_number,display_order:c.display_order}));
+      }else{
+        const {data,error}=await client.from('vote_candidates').select('id,name,race_type,list_number,option_number,display_order').eq('active',true).order('race_type').order('list_number').order('option_number').order('display_order');
+        if(error) throw error;
+        candidateRows=data||[];
+      }
+      renderOptions();
+    }catch(err){ throw err; }
   }
 
   async function refreshStatuses(){
     statusMap={};
-    const {data,error}=await client.rpc('vote_admin_candidate_preview_all');
-    if(!error && data?.ok && data?.candidates){
-      for(const [id,payload] of Object.entries(data.candidates)){
-        const a=payload?.access||{};
-        statusMap[id]={
-          candidate_id:id,
-          access_email:a.access_email||'',
-          account_active:!!a.account_active,
-          access_expires_at:a.access_expires_at||null,
-          access_valid:!!a.access_valid
-        };
-      }
-      return;
-    }
-    const fallback=await client.rpc('vote_admin_candidate_access_status');
-    if(fallback.error) throw fallback.error;
-    (fallback.data||[]).forEach(r=>{statusMap[r.candidate_id]=r;});
+    const {data,error}=await client.rpc('vote_admin_candidate_access_status');
+    if(error) throw error;
+    (data||[]).forEach(r=>{statusMap[r.candidate_id]=r;});
   }
 
   function getStatusRow(candidateId){ return statusMap[candidateId]||null; }
@@ -112,11 +102,7 @@
     const duration=document.getElementById('candidateAccessDays');
     if(!select||!email||!status||!btn||!duration) return;
 
-    email.value='';
-    email.disabled=!select.value;
-    duration.disabled=!select.value;
-    btn.disabled=!select.value;
-    btn.textContent='Guardar acceso';
+    email.value=''; email.disabled=!select.value; duration.disabled=!select.value; btn.disabled=!select.value; btn.textContent='Guardar acceso';
     status.textContent=select.value?'Consultando estado…':'Seleccioná un candidato existente.';
     if(!select.value) return;
 
@@ -125,24 +111,14 @@
       const row=getStatusRow(select.value);
       if(!row){ status.textContent='Listo para asignar acceso.'; return; }
       if(row.account_active){
-        email.value=row.access_email||'';
-        email.disabled=true;
-        btn.disabled=false;
+        email.value=row.access_email||''; email.disabled=true; btn.disabled=false;
         btn.textContent=row.access_valid?'Agregar tiempo':'Reactivar acceso';
         status.textContent=`${row.access_valid?'Acceso activo':'Acceso vencido'}${row.access_email?` · ${row.access_email}`:''}${row.access_expires_at?` · hasta ${fmt(row.access_expires_at)}`:''}`;
       }else if(row.access_email){
-        email.value=row.access_email;
-        email.disabled=false;
-        btn.disabled=false;
-        btn.textContent='Generar nuevo código';
+        email.value=row.access_email; email.disabled=false; btn.disabled=false; btn.textContent='Generar nuevo código';
         status.textContent=`Acceso pendiente para ${row.access_email}${row.access_expires_at?` · disponible hasta ${fmt(row.access_expires_at)}`:''}`;
-      }else{
-        status.textContent='Listo para asignar acceso.';
-      }
-    }catch(err){
-      console.error('candidate access status',err);
-      status.textContent='No se pudo consultar el estado del acceso.';
-    }
+      }else status.textContent='Listo para asignar acceso.';
+    }catch(err){ console.error('candidate access status',err); status.textContent='No se pudo consultar el estado del acceso.'; }
   }
 
   function errorText(reason,data){
@@ -168,8 +144,7 @@
     if(!candidateId){msg.textContent='Seleccioná un candidato.';return;}
     if(!Number.isInteger(days)||days<1||days>365){msg.textContent='Seleccioná una duración válida.';return;}
 
-    btn.disabled=true;
-    msg.textContent='Guardando acceso…';
+    btn.disabled=true; msg.textContent='Guardando acceso…';
     try{
       const {data:{session}}=await client.auth.getSession();
       if(!session){msg.textContent='La sesión de administrador venció. Cerrá sesión e ingresá nuevamente.';return;}
@@ -181,44 +156,37 @@
         if(error){console.error(error);msg.textContent=`No se pudo actualizar: ${error.message||'error'}`;return;}
         if(!data?.ok){msg.textContent=errorText(data?.reason,data);return;}
         msg.textContent=`Acceso actualizado hasta ${fmt(data.access_expires_at)}.`;
-        await refreshStatuses();
-        await loadCandidateStatus({refresh:false});
+        await refreshStatuses(); await loadCandidateStatus();
       }else{
         if(!/^\S+@\S+\.\S+$/.test(email)){msg.textContent='Ingresá un correo válido.';return;}
         const {data,error}=await client.rpc('vote_admin_set_candidate_access',{p_candidate_id:candidateId,p_email:email,p_days:days});
         if(error){console.error(error);msg.textContent=`No se pudo guardar: ${error.message||'error'}`;return;}
         if(!data?.ok){msg.textContent=errorText(data?.reason,data);return;}
         msg.textContent=`Acceso preparado por ${data.days} días para ${data.candidate}.`;
-        const code=data.activation_code||'';
-        const expiresAt=data.access_expires_at||null;
-        await refreshStatuses();
-        await loadCandidateStatus({preserveCode:true});
-        showCode(code,expiresAt);
+        const code=data.activation_code||''; const expiresAt=data.access_expires_at||null;
+        await refreshStatuses(); await loadCandidateStatus({preserveCode:true}); showCode(code,expiresAt);
       }
-    }catch(err){
-      console.error('save candidate access',err);
-      msg.textContent=`No se pudo guardar: ${err?.message||'error'}`;
-    }finally{
-      btn.disabled=false;
-    }
+    }catch(err){ console.error('save candidate access',err); msg.textContent=`No se pudo guardar: ${err?.message||'error'}`; }
+    finally{ btn.disabled=false; }
   }
 
   async function init(){
+    if(window.__appRole!=='admin') return;
     const select=document.getElementById('existingCandidateSelect');
     if(!select) return;
     ensureDurationField(); ensureCodeBox();
     try{
       await loadCandidates();
-      await refreshStatuses();
       select.addEventListener('change',()=>loadCandidateStatus());
       document.getElementById('candidateAccessSave')?.addEventListener('click',saveAccess);
-      if(select.value) await loadCandidateStatus();
+      // El estado se consulta recién cuando el administrador elige un candidato.
+      const status=document.getElementById('candidateAccessStatus');
+      if(status) status.textContent='Seleccioná un candidato existente.';
     }catch(err){
       console.error('candidate access init',err);
-      const msg=document.getElementById('candidateAccessMsg');
-      if(msg) msg.textContent='No se pudieron cargar los accesos.';
+      const msg=document.getElementById('candidateAccessMsg'); if(msg) msg.textContent='No se pudieron cargar los accesos.';
     }
   }
 
-  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',init); else init();
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',init,{once:true}); else init();
 })();
