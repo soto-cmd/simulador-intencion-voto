@@ -2,16 +2,13 @@
   const $ = (id) => document.getElementById(id);
   let initialized = false;
 
-  function optionText(c) {
-    const extras = [];
-    if (c.list_number) extras.push(`Lista ${c.list_number}`);
-    if (c.option_number) extras.push(`Opción ${c.option_number}`);
-    return extras.length ? `${c.name} — ${extras.join(' · ')}` : c.name;
-  }
-
   function replaceWithSelect(id, placeholder) {
     const old = $(id);
-    if (!old || old.tagName === 'SELECT') return old;
+    if (!old) return null;
+    if (old.tagName === 'SELECT') {
+      if (!old.options.length) old.innerHTML = `<option value="">${placeholder}</option>`;
+      return old;
+    }
     const sel = document.createElement('select');
     sel.id = id;
     sel.innerHTML = `<option value="">${placeholder}</option>`;
@@ -19,78 +16,78 @@
     return sel;
   }
 
-  function makeReadonly(id) {
-    const el = $(id);
-    if (!el) return;
-    el.readOnly = true;
-    el.classList.add('adminAutoField');
-    el.tabIndex = -1;
-  }
-
-  function partyKey(c) {
-    return `${c.party_abbr || ''}|${c.party_name || ''}|${c.list_number || ''}`;
-  }
-
   function currentCandidates() {
     try { return Array.isArray(candidates) ? candidates : []; }
     catch { return []; }
   }
 
-  function refreshParties() {
+  function listLabel(row) {
+    const party = row.party_name || row.party_abbr || '';
+    const abbr = row.party_abbr ? ` · ${row.party_abbr}` : '';
+    return `Lista ${row.list_number}${party ? ` — ${party}` : ''}${abbr}`;
+  }
+
+  function candidateLabel(c) {
+    return c.option_number ? `${c.name} — Opción ${c.option_number}` : c.name;
+  }
+
+  function rowsForRace() {
     const race = $('candRace')?.value || 'intendente';
-    const rows = currentCandidates().filter(c => c.race_type === race);
-    const partySelect = $('candParty');
-    if (!partySelect) return;
+    return currentCandidates().filter(c => c.race_type === race && c.active !== false);
+  }
+
+  function refreshLists() {
+    const listSelect = $('candList');
+    if (!listSelect) return;
+    const rows = rowsForRace();
     const seen = new Map();
     rows.forEach(c => {
-      const key = partyKey(c);
-      if (!seen.has(key)) seen.set(key, c);
+      const key = String(c.list_number || '');
+      if (key && !seen.has(key)) seen.set(key, c);
     });
-    partySelect.innerHTML = '<option value="">Seleccionar partido / movimiento</option>' +
-      [...seen.entries()].map(([key, c]) => `<option value="${key}">${c.party_name || c.party_abbr || 'Sin partido'}${c.list_number ? ` — Lista ${c.list_number}` : ''}</option>`).join('');
+    const ordered = [...seen.entries()].sort((a,b) => Number(a[0]) - Number(b[0]));
+    listSelect.innerHTML = '<option value="">Seleccionar lista</option>' + ordered.map(([num, c]) => `<option value="${num}">${listLabel(c)}</option>`).join('');
     refreshNames();
   }
 
   function refreshNames() {
-    const race = $('candRace')?.value || 'intendente';
-    const party = $('candParty')?.value || '';
     const nameSelect = $('candName');
     if (!nameSelect) return;
-    let rows = currentCandidates().filter(c => c.race_type === race);
-    if (party) rows = rows.filter(c => partyKey(c) === party);
+    const list = $('candList')?.value || '';
+    let rows = rowsForRace();
+    if (list) rows = rows.filter(c => String(c.list_number || '') === String(list));
     rows.sort((a,b) => (a.option_number || a.display_order || 999) - (b.option_number || b.display_order || 999));
-    nameSelect.innerHTML = '<option value="">Seleccionar candidato</option>' + rows.map(c => `<option value="${c.id}">${optionText(c)}</option>`).join('');
-    clearAutoFields();
+    nameSelect.innerHTML = '<option value="">Seleccionar candidato</option>' + rows.map(c => `<option value="${c.id}">${candidateLabel(c)}</option>`).join('');
+    syncHiddenFields(null);
   }
 
-  function clearAutoFields() {
-    ['candOffice','candList','candPartyAbbr','candOption','candOrder','candPhoto'].forEach(id => {
-      const el = $(id); if (el) el.value = '';
-    });
-    const color = $('candColor'); if (color) color.value = '#64748b';
+  function syncHiddenFields(c) {
+    if (!$('candParty')) return;
+    $('candParty').value = c?.party_name || '';
+    $('candOffice').value = c?.office || '';
+    $('candPartyAbbr').value = c?.party_abbr || '';
+    if ($('candColor')) $('candColor').value = c?.party_color || '#64748b';
+    $('candOption').value = c?.option_number || '';
+    $('candOrder').value = c?.display_order || '';
+    $('candPhoto').value = c?.photo_url || '';
   }
 
   function fillFromCandidate() {
     const id = $('candName')?.value;
     const c = currentCandidates().find(x => x.id === id);
-    if (!c) { clearAutoFields(); return; }
-    $('candOffice').value = c.office || (c.race_type === 'junta' ? 'Junta municipal' : 'Intendente municipal');
-    $('candList').value = c.list_number || '';
-    $('candPartyAbbr').value = c.party_abbr || '';
-    $('candColor').value = c.party_color || '#64748b';
-    $('candOption').value = c.option_number || '';
-    $('candOrder').value = c.display_order || '';
-    $('candPhoto').value = c.photo_url || '';
+    syncHiddenFields(c || null);
   }
 
-  function convertButtonToAccessMode() {
+  function prepareForm() {
+    replaceWithSelect('candName', 'Seleccionar candidato');
+    replaceWithSelect('candList', 'Seleccionar lista');
+
     const btn = $('addCandidateBtn');
-    if (!btn) return;
-    btn.textContent = 'Asignar acceso';
-    const title = btn.closest('.card')?.querySelector('h3');
+    if (btn) btn.textContent = 'Asignar acceso';
+    const title = btn?.closest('.card')?.querySelector('h3');
     if (title) title.textContent = 'Asignar acceso a candidato';
-    const hint = btn.closest('.card')?.querySelector('.muted:last-child');
-    if (hint) hint.textContent = 'Elegí una candidatura existente y asignale un correo. El candidato creará su propia contraseña.';
+    const hint = btn?.closest('.card')?.querySelector('.muted:last-child');
+    if (hint) hint.textContent = 'Seleccioná la lista y el candidato, luego asignale un correo. El candidato creará su propia contraseña.';
   }
 
   function interceptSubmit() {
@@ -104,13 +101,16 @@
       const email = $('candEmail')?.value.trim().toLowerCase();
       const msg = $('adminMsg');
       if (!candidateId || !email) {
-        if (msg) msg.textContent = 'Seleccioná un candidato e ingresá su correo.';
+        if (msg) msg.textContent = 'Seleccioná una lista, un candidato e ingresá su correo.';
         return;
       }
       btn.disabled = true;
       if (msg) msg.textContent = 'Asignando acceso…';
       try {
-        const { error } = await db.from('vote_candidate_invites').upsert({ candidate_id: candidateId, email }, { onConflict: 'candidate_id,email' });
+        const { error } = await db.from('vote_candidate_invites').upsert(
+          { candidate_id: candidateId, email },
+          { onConflict: 'candidate_id,email' }
+        );
         if (error) throw error;
         if (msg) msg.textContent = 'Acceso asignado. El candidato ya puede crear su cuenta con ese correo.';
         $('candEmail').value = '';
@@ -127,19 +127,14 @@
     if (initialized) return;
     const panel = $('adminPanel');
     if (!panel || panel.classList.contains('hidden')) return;
-    if (!$('candName') || !$('candParty') || !$('candRace')) return;
+    if (!$('candName') || !$('candList') || !$('candRace')) return;
     initialized = true;
 
-    replaceWithSelect('candName', 'Seleccionar candidato');
-    replaceWithSelect('candParty', 'Seleccionar partido / movimiento');
-    ['candOffice','candList','candPartyAbbr','candOption','candOrder','candPhoto'].forEach(makeReadonly);
-    const color = $('candColor'); if (color) { color.disabled = true; color.classList.add('adminAutoField'); }
-
-    $('candRace').addEventListener('change', refreshParties);
-    $('candParty').addEventListener('change', refreshNames);
+    prepareForm();
+    $('candRace').addEventListener('change', refreshLists);
+    $('candList').addEventListener('change', refreshNames);
     $('candName').addEventListener('change', fillFromCandidate);
-    convertButtonToAccessMode();
-    refreshParties();
+    refreshLists();
     interceptSubmit();
   }
 
