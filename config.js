@@ -4,7 +4,7 @@ window.APP_CONFIG = {
 };
 
 (() => {
-  const V = '20260917r';
+  const V = '20260917s';
   let privateLoadPromise = null;
 
   function addStyle(href){
@@ -66,9 +66,7 @@ window.APP_CONFIG = {
 
   async function boot(){
     loadPublicModules();
-
     document.getElementById('loginBtn')?.addEventListener('click', () => loadPrivateModules(), { once:false });
-
     setTimeout(async () => {
       try {
         const client = supabase.createClient(window.APP_CONFIG.SUPABASE_URL, window.APP_CONFIG.SUPABASE_KEY);
@@ -76,7 +74,6 @@ window.APP_CONFIG = {
         if(session) loadPrivateModules();
       } catch (err) { console.warn('session preload', err); }
     }, 250);
-
     if('serviceWorker' in navigator){
       window.addEventListener('load', () => {
         navigator.serviceWorker.register('./sw.js').catch(err => console.warn('service worker', err));
