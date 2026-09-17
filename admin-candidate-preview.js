@@ -1,42 +1,8 @@
 (() => {
-  const previewDb = supabase.createClient(window.APP_CONFIG.SUPABASE_URL, window.APP_CONFIG.SUPABASE_KEY);
-  const esc = (s='') => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-  const pct = v => `${Number(v || 0).toFixed(1).replace('.0','')}%`;
-  const fmt = v => v ? new Date(v).toLocaleString('es-PY',{dateStyle:'medium',timeStyle:'short'}) : 'Sin vencimiento';
-  let candidates = [];
-  let selectedCandidateId = '';
-  let requestSeq = 0;
-
-  function spriteMarkup(c,index,asset){
-    if(!Number.isInteger(index) || index < 0 || index > 11) return '';
-    const col=index%4,row=Math.floor(index/4);
-    const x=(col/3)*100,y=(row/2)*100;
-    return `<div class="candidateSpritePortrait adminPreviewSprite" role="img" aria-label="${esc(c?.name||'')}" style="width:100%;height:100%;background:#fff url('./${asset}') no-repeat ${x}% ${y}%;background-size:400% 300%;background-position:${x}% ${y}%"></div>`;
-  }
-
-  function imageMarkup(c){
-    const raw = c?.photo_url || '';
-    if(raw.startsWith('sprite:')){
-      const html=spriteMarkup(c,Number(raw.slice(7)),'assets/candidates/anr-sprite.webp');
-      if(html) return html;
-    }
-    if(raw.startsWith('sprite-plra:')){
-      const html=spriteMarkup(c,Number(raw.slice(12)),'assets/candidates/plra-sprite.webp');
-      if(html) return html;
-    }
-    if(raw){
-      const url = /^https?:\/\//i.test(raw) ? raw : raw.startsWith('/') ? `.${raw}` : raw.startsWith('assets/') ? `./${raw}` : raw;
-      return `<img src="${esc(url)}" alt="${esc(c.name)}">`;
-    }
-    const initials=(c?.name||'?').split(/\s+/).filter(Boolean).slice(0,2).map(x=>x[0]).join('').toUpperCase();
-    return `<div class="adminPreviewInitials">${esc(initials)}</div>`;
-  }
-
-  function socialButtons(c){
-    const defs=[['facebook_url','Facebook','f'],['instagram_url','Instagram','◎'],['tiktok_url','TikTok','♪'],['youtube_url','YouTube','▶'],['x_url','X','X'],['whatsapp_url','WhatsApp','wa']];
-    const items=defs.filter(([k])=>c?.[k]).map(([k,label,icon])=>`<a class="candidateSocialButton" href="${esc(c[k])}" target="_blank" rel="noopener noreferrer"><span>${icon}</span>${label}</a>`);
-    return items.length ? `<div class="candidateSocialPublic">${items.join('')}</div>` : '<p class="muted">Este candidato todavía no cargó redes sociales.</p>';
-  }
+  const previewDb = (typeof db !== 'undefined' && db) ? db : supabase.createClient(window.APP_CONFIG.SUPABASE_URL, window.APP_CONFIG.SUPABASE_KEY);
+  const esc = (s='') => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot',"'":'&#39;'}[c]));
+  let rows = [];
+  let started = false;
 
   function candidateLabel(c){
     return `${c.name} · ${c.race_type==='intendente'?'Intendente':'Junta'}${c.list_number?` · Lista ${c.list_number}`:''}${c.option_number?` · Opción ${c.option_number}`:''}`;
@@ -67,155 +33,60 @@
       </div>
       <div id="adminPreviewContent"></div>`;
     const adminPanel=document.getElementById('adminPanel');
-    if(adminPanel) adminPanel.insertAdjacentElement('beforebegin',section);
-    else dash.appendChild(section);
+    if(adminPanel) adminPanel.insertAdjacentElement('beforebegin',section); else dash.appendChild(section);
 
-    const pickerBtn=section.querySelector('#adminCandidatePickerButton');
+    const btn=section.querySelector('#adminCandidatePickerButton');
     const menu=section.querySelector('#adminCandidatePickerMenu');
     const search=section.querySelector('#adminCandidatePickerSearch');
-    pickerBtn?.addEventListener('click',()=>{
+    btn?.addEventListener('click',()=>{
       const open=menu?.classList.contains('hidden');
       menu?.classList.toggle('hidden',!open);
-      pickerBtn.setAttribute('aria-expanded',open?'true':'false');
+      btn.setAttribute('aria-expanded',open?'true':'false');
       if(open) setTimeout(()=>search?.focus(),20);
     });
-    search?.addEventListener('input',()=>renderCandidateList(search.value));
-    section.querySelector('#adminPreviewRefresh')?.addEventListener('click',renderSelected);
+    search?.addEventListener('input',()=>renderList(search.value));
     document.addEventListener('click',(ev)=>{
       if(!section.querySelector('#adminCandidatePicker')?.contains(ev.target)){
-        menu?.classList.add('hidden');
-        pickerBtn?.setAttribute('aria-expanded','false');
+        menu?.classList.add('hidden'); btn?.setAttribute('aria-expanded','false');
       }
     });
     return section;
   }
 
-  function renderCandidateList(query=''){
+  function renderList(query=''){
     const holder=document.getElementById('adminCandidatePickerList');
     if(!holder) return;
     const q=String(query||'').trim().toLowerCase();
-    const rows=candidates.filter(c=>candidateLabel(c).toLowerCase().includes(q));
-    holder.innerHTML=rows.length ? rows.map(c=>`<button type="button" class="candidatePickerOption${c.id===selectedCandidateId?' selected':''}" data-candidate-id="${c.id}"><span>${esc(c.name)}</span><small>${c.race_type==='intendente'?'Intendente municipal':'Junta municipal'}${c.list_number?` · Lista ${esc(c.list_number)}`:''}${c.option_number?` · Opción ${esc(c.option_number)}`:''}</small></button>`).join('') : '<div class="candidatePickerEmpty">No se encontraron candidatos.</div>';
-    holder.querySelectorAll('[data-candidate-id]').forEach(btn=>btn.addEventListener('click',()=>{
-      selectedCandidateId=btn.dataset.candidateId;
-      const c=candidates.find(x=>x.id===selectedCandidateId);
-      const mainBtn=document.getElementById('adminCandidatePickerButton');
-      if(mainBtn && c) mainBtn.querySelector('span').textContent=candidateLabel(c);
-      document.getElementById('adminCandidatePickerMenu')?.classList.add('hidden');
-      mainBtn?.setAttribute('aria-expanded','false');
-      renderCandidateList(document.getElementById('adminCandidatePickerSearch')?.value||'');
-      renderSelected();
-    }));
+    const filtered=rows.filter(c=>candidateLabel(c).toLowerCase().includes(q));
+    holder.innerHTML=filtered.length ? filtered.map(c=>`<button type="button" class="candidatePickerOption" data-candidate-id="${c.id}"><span>${esc(c.name)}</span><small>${c.race_type==='intendente'?'Intendente municipal':'Junta municipal'}${c.list_number?` · Lista ${esc(c.list_number)}`:''}${c.option_number?` · Opción ${esc(c.option_number)}`:''}</small></button>`).join('') : '<div class="candidatePickerEmpty">No se encontraron candidatos.</div>';
   }
 
-  async function loadCandidates(){
-    const {data,error}=await previewDb.from('vote_candidates').select('id,name,office,race_type,list_number,option_number,party_name,party_abbr,party_color,photo_url,referral_code,facebook_url,instagram_url,tiktok_url,youtube_url,x_url,whatsapp_url').eq('active',true).order('race_type').order('list_number').order('option_number');
-    if(error) throw error;
-    candidates=data||[];
-    renderCandidateList();
-  }
-
-  function metricBar(label,value,color){
-    const v=Math.max(0,Math.min(100,Number(value||0)));
-    return `<div class="candidateMetric"><div class="candidateMetricHead"><span>${esc(label)}</span><strong>${pct(v)}</strong></div><div class="candidateMetricTrack"><div class="candidateMetricFill" style="width:${v}%;background:${esc(color)}"></div></div></div>`;
-  }
-
-  function historyRows(rows,color){
-    if(!rows?.length) return '<div class="empty">Sin datos de los últimos 7 días.</div>';
-    return rows.map(r=>`<div class="historyRow"><span>${new Date(`${r.day}T12:00:00`).toLocaleDateString('es-PY',{day:'2-digit',month:'short'})}</span><div class="barTrack"><div class="barFill" style="width:${Math.max(0,Math.min(100,Number(r.percentage||0)))}%;background:${esc(color)}"></div></div><strong>${pct(r.percentage)}</strong></div>`).join('');
-  }
-
-  function demoRows(data){
-    if(!data || typeof data!=='object') return '<div class="empty">Sin datos demográficos disponibles.</div>';
-    const groups=[['Sexo',data.gender],['Edad',data.age],['Residencia',data.residence]];
-    return groups.map(([group,items])=>{
-      if(!Array.isArray(items)||!items.length) return '';
-      return `<div class="demoSection"><h4>${group}</h4>${items.map(r=>`<div class="demoRow"><span>${esc(r.label||'')}</span><div class="barTrack"><div class="barFill" style="width:${Math.max(0,Math.min(100,Number(r.percentage||0)))}%"></div></div><strong>${r.count??''}</strong></div>`).join('')}</div>`;
-    }).join('') || '<div class="empty">Sin datos demográficos disponibles.</div>';
-  }
-
-  async function shareLink(link,name){
-    const title=`Simulador de intención de voto · ${name}`;
-    const text=`Participá en el simulador desde el enlace compartido por ${name}.`;
-    if(navigator.share){ try{ await navigator.share({title,text,url:link}); return; }catch(e){ if(e?.name==='AbortError') return; } }
-    try{ await navigator.clipboard.writeText(link); window.showToast?.('Enlace copiado.'); }
-    catch{ window.prompt('Copiá este enlace:',link); }
-  }
-
-  async function renderSelected(){
-    const id=selectedCandidateId;
-    const holder=document.getElementById('adminPreviewContent');
-    if(!holder) return;
-    if(!id){ holder.innerHTML=''; return; }
-    const seq=++requestSeq;
-    holder.innerHTML='<div class="card adminPreviewLoading"><span class="previewSpinner"></span><div><strong>Cargando panel…</strong><p class="muted">Obteniendo la información del candidato.</p></div></div>';
+  async function loadRows(){
     try{
-      const {data,error}=await previewDb.rpc('vote_admin_candidate_preview',{p_candidate_id:id});
-      if(seq!==requestSeq) return;
-      if(error) throw error;
-      if(!data?.ok) throw new Error(data?.reason||'preview_failed');
-      const candidate=data.candidate || candidates.find(c=>c.id===id) || {};
-      const row=data.stats||{};
-      const hist=data.history||[];
-      const ref=data.referral||{};
-      const acc=data.access||{};
-      const demo=data.demographics||{};
-      const color=candidate?.party_color || (candidate?.party_abbr==='ANR'?'#e31b23':candidate?.party_abbr==='PLRA'?'#1437d1':'#1d4ed8');
-      const link=ref.referral_code ? `${location.origin}${location.pathname}?ref=${encodeURIComponent(ref.referral_code)}` : '';
-      holder.innerHTML=`
-        <div class="adminPreviewNotice">Vista previa del candidato · Solo lectura</div>
-        <div class="candidateVisualHero">
-          <div class="candidateIdentityCard" style="--candidate-color:${esc(color)}">
-            <div class="candidateIdentityPhoto">${imageMarkup(candidate)}</div>
-            <div class="candidateIdentityText"><div class="candidateRole">${candidate?.race_type==='intendente'?'Intendente municipal':'Junta municipal'}</div><h3>${esc(candidate?.name||'')}</h3><div class="candidateIdentityMeta"><span class="partyChip">${esc(candidate?.party_name||candidate?.party_abbr||'')}</span>${candidate?.list_number?`<span class="listChip">Lista ${esc(candidate.list_number)}</span>`:''}${candidate?.option_number?`<span class="optionChip">Opción ${esc(candidate.option_number)}</span>`:''}</div></div>
-          </div>
-          <div class="candidateChartCard" style="--candidate-color:${esc(color)}">
-            <div class="candidateDonut" style="--candidate-color:${esc(color)};--candidate-pct:${Number(row.percentage||0)}"><div class="candidateDonutValue">${pct(row.percentage)}<small>Intención de voto</small></div></div>
-            <div class="candidateChartInfo"><h4>Resumen de intención</h4>${metricBar('Intención general',row.percentage,color)}${metricBar('Intención hoy',row.today_percentage,color)}</div>
-          </div>
-        </div>
-        <div class="stats adminPreviewStats">
-          <div class="statCard"><div class="statLabel">Registros para su candidatura</div><div class="statValue">${Number(row.candidate_votes||0)}</div></div>
-          <div class="statCard"><div class="statLabel">Simulaciones válidas</div><div class="statValue">${Number(row.total_simulations||0)}</div></div>
-          <div class="statCard"><div class="statLabel">Desde su enlace</div><div class="statValue">${Number(ref.participants_from_link||0)}</div></div>
-          <div class="statCard"><div class="statLabel">Hoy desde su enlace</div><div class="statValue">${Number(ref.today_from_link||0)}</div></div>
-        </div>
-        <div class="card adminPreviewAccess"><strong>Estado del acceso:</strong> ${acc.account_active ? (acc.access_valid?'Activo':'Vencido') : 'Pendiente de activación'}${acc.access_email?` · ${esc(acc.access_email)}`:''}${acc.access_expires_at?` · hasta ${esc(fmt(acc.access_expires_at))}`:''}</div>
-        <div class="card candidateLinkBox">
-          <h3>Enlace único para participantes</h3>
-          ${link?`<div class="candidateLinkRow"><input id="adminPreviewReferralLink" readonly value="${esc(link)}"><button id="adminPreviewCopy" class="btn secondary" type="button">Copiar enlace</button><button id="adminPreviewShare" class="btn" type="button">Compartir</button></div>`:'<p class="muted">Todavía no hay enlace asignado.</p>'}
-        </div>
-        <div class="card candidateSocialCard"><div class="candidateSocialHead"><div><p class="eyebrow">PERFIL DEL CANDIDATO</p><h3>Redes sociales</h3><p class="muted">Esto es lo que tiene cargado actualmente.</p></div></div>${socialButtons(candidate)}</div>
-        <div class="dashboardGrid">
-          <div class="card"><h3>Evolución últimos 7 días</h3><div>${historyRows(hist,color)}</div></div>
-          <div class="card"><h3>Perfil general de participantes</h3><p class="muted">El candidato ve datos generales, no preferencias individuales.</p><div>${demoRows(demo)}</div></div>
-        </div>`;
-      document.getElementById('adminPreviewCopy')?.addEventListener('click',async()=>{ try{await navigator.clipboard.writeText(link); window.showToast?.('Enlace copiado.');}catch{window.prompt('Copiá este enlace:',link);} });
-      document.getElementById('adminPreviewShare')?.addEventListener('click',()=>shareLink(link,candidate?.name||''));
+      if(typeof candidates !== 'undefined' && Array.isArray(candidates) && candidates.length){
+        rows = candidates.filter(c=>c.active!==false);
+      }else{
+        const {data,error}=await previewDb.from('vote_candidates').select('id,name,race_type,list_number,option_number,active').eq('active',true).order('race_type').order('list_number').order('option_number');
+        if(error) throw error;
+        rows=data||[];
+      }
+      renderList();
     }catch(err){
-      if(seq!==requestSeq) return;
-      console.error('admin candidate preview',err);
-      holder.innerHTML='<div class="card adminPreviewError"><strong>No se pudo cargar la vista.</strong><p class="muted">Intentá nuevamente. Si continúa, revisaremos la conexión con los datos.</p><button class="btn secondary" type="button" id="retryAdminPreview">Reintentar</button></div>';
-      document.getElementById('retryAdminPreview')?.addEventListener('click',renderSelected);
+      console.error('admin preview candidates',err);
+      const holder=document.getElementById('adminCandidatePickerList');
+      if(holder) holder.innerHTML='<div class="candidatePickerEmpty">No se pudieron cargar los candidatos.</div>';
     }
   }
 
-  async function init(){
-    const section=ensureSection();
-    if(!section) return;
-    try{
-      const {data:profileData}=await previewDb.rpc('vote_my_profile');
-      const profile=Array.isArray(profileData)?profileData[0]:profileData;
-      if(profile?.role!=='admin') return;
-      if(!candidates.length) await loadCandidates();
-    }catch(err){ console.error('admin preview init',err); }
+  function start(){
+    if(started || window.__appRole!=='admin') return;
+    started=true;
+    ensureSection();
+    loadRows();
+    window.dispatchEvent(new Event('admin-preview:ready'));
   }
 
-  const observer=new MutationObserver(()=>setTimeout(init,120));
-  function start(){
-    const dash=document.getElementById('dashboardView');
-    if(dash) observer.observe(dash,{attributes:true,attributeFilter:['class']});
-    setTimeout(init,350);
-  }
-  if(document.readyState==='loading') window.addEventListener('DOMContentLoaded',start); else start();
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',()=>setTimeout(start,0),{once:true});
+  else setTimeout(start,0);
+  window.addEventListener('dashboard:loaded',start);
 })();
