@@ -4,7 +4,7 @@ window.APP_CONFIG = {
 };
 
 (() => {
-  const V = '20260917q';
+  const V = '20260917r';
   let privateLoadPromise = null;
 
   function addStyle(href){
