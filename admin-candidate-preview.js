@@ -5,6 +5,7 @@
   const fmt = v => v ? new Date(v).toLocaleString('es-PY',{dateStyle:'medium',timeStyle:'short'}) : 'Sin vencimiento';
   let candidates = [];
   let selectedCandidateId = '';
+  let requestSeq = 0;
 
   function imageMarkup(c){
     const raw = c?.photo_url || '';
@@ -116,11 +117,13 @@
     return rows.map(r=>`<div class="historyRow"><span>${new Date(`${r.day}T12:00:00`).toLocaleDateString('es-PY',{day:'2-digit',month:'short'})}</span><div class="barTrack"><div class="barFill" style="width:${Math.max(0,Math.min(100,Number(r.percentage||0)))}%;background:${esc(color)}"></div></div><strong>${pct(r.percentage)}</strong></div>`).join('');
   }
 
-  function demoRows(rows){
-    if(!Array.isArray(rows) || !rows.length) return '<div class="empty">Sin datos demográficos disponibles.</div>';
-    const groups={};
-    rows.forEach(r=>{ const group=r.dimension||r.category||r.group_name||'Datos'; (groups[group]??=[]).push(r); });
-    return Object.entries(groups).map(([group,items])=>`<div class="demoSection"><h4>${esc(group)}</h4>${items.map(r=>`<div class="demoRow"><span>${esc(r.label||r.value||r.category_value||'')}</span><div class="barTrack"><div class="barFill" style="width:${Math.max(0,Math.min(100,Number(r.percentage||0)))}%"></div></div><strong>${r.count??r.total??''}</strong></div>`).join('')}</div>`).join('');
+  function demoRows(data){
+    if(!data || typeof data!=='object') return '<div class="empty">Sin datos demográficos disponibles.</div>';
+    const groups=[['Sexo',data.gender],['Edad',data.age],['Residencia',data.residence]];
+    return groups.map(([group,items])=>{
+      if(!Array.isArray(items)||!items.length) return '';
+      return `<div class="demoSection"><h4>${group}</h4>${items.map(r=>`<div class="demoRow"><span>${esc(r.label||'')}</span><div class="barTrack"><div class="barFill" style="width:${Math.max(0,Math.min(100,Number(r.percentage||0)))}%"></div></div><strong>${r.count??''}</strong></div>`).join('')}</div>`;
+    }).join('') || '<div class="empty">Sin datos demográficos disponibles.</div>';
   }
 
   async function shareLink(link,name){
@@ -136,21 +139,19 @@
     const holder=document.getElementById('adminPreviewContent');
     if(!holder) return;
     if(!id){ holder.innerHTML=''; return; }
-    holder.innerHTML='<div class="card"><p class="muted">Cargando vista del candidato…</p></div>';
+    const seq=++requestSeq;
+    holder.innerHTML='<div class="card adminPreviewLoading"><span class="previewSpinner"></span><div><strong>Cargando panel…</strong><p class="muted">Obteniendo la información del candidato.</p></div></div>';
     try{
-      const candidate=candidates.find(c=>c.id===id);
-      const [{data:dashRows,error:dashErr},{data:history,error:histErr},{data:refs,error:refErr},{data:access,error:accessErr},{data:demo,error:demoErr}] = await Promise.all([
-        previewDb.rpc('vote_my_dashboard'),
-        previewDb.rpc('vote_my_history',{p_days:7}),
-        previewDb.rpc('vote_my_referral_summary'),
-        previewDb.rpc('vote_admin_candidate_access_status'),
-        previewDb.rpc('vote_demographic_summary')
-      ]);
-      if(dashErr||histErr||refErr||accessErr) throw (dashErr||histErr||refErr||accessErr);
-      const row=(dashRows||[]).find(r=>r.candidate_id===id)||{};
-      const hist=(history||[]).filter(r=>r.candidate_id===id);
-      const ref=(refs||[]).find(r=>r.candidate_id===id)||{};
-      const acc=(access||[]).find(r=>r.candidate_id===id)||{};
+      const {data,error}=await previewDb.rpc('vote_admin_candidate_preview',{p_candidate_id:id});
+      if(seq!==requestSeq) return;
+      if(error) throw error;
+      if(!data?.ok) throw new Error(data?.reason||'preview_failed');
+      const candidate=data.candidate || candidates.find(c=>c.id===id) || {};
+      const row=data.stats||{};
+      const hist=data.history||[];
+      const ref=data.referral||{};
+      const acc=data.access||{};
+      const demo=data.demographics||{};
       const color=candidate?.party_color || (candidate?.party_abbr==='ANR'?'#e31b23':candidate?.party_abbr==='PLRA'?'#1437d1':'#1d4ed8');
       const link=ref.referral_code ? `${location.origin}${location.pathname}?ref=${encodeURIComponent(ref.referral_code)}` : '';
       holder.innerHTML=`
@@ -179,11 +180,16 @@
         <div class="card candidateSocialCard"><div class="candidateSocialHead"><div><p class="eyebrow">PERFIL DEL CANDIDATO</p><h3>Redes sociales</h3><p class="muted">Esto es lo que tiene cargado actualmente.</p></div></div>${socialButtons(candidate)}</div>
         <div class="dashboardGrid">
           <div class="card"><h3>Evolución últimos 7 días</h3><div>${historyRows(hist,color)}</div></div>
-          <div class="card"><h3>Perfil general de participantes</h3><p class="muted">El candidato ve datos generales, no preferencias individuales.</p><div>${demoErr?'<div class="empty">No se pudo cargar.</div>':demoRows(demo)}</div></div>
+          <div class="card"><h3>Perfil general de participantes</h3><p class="muted">El candidato ve datos generales, no preferencias individuales.</p><div>${demoRows(demo)}</div></div>
         </div>`;
       document.getElementById('adminPreviewCopy')?.addEventListener('click',async()=>{ try{await navigator.clipboard.writeText(link); window.showToast?.('Enlace copiado.');}catch{window.prompt('Copiá este enlace:',link);} });
       document.getElementById('adminPreviewShare')?.addEventListener('click',()=>shareLink(link,candidate?.name||''));
-    }catch(err){ console.error('admin candidate preview',err); holder.innerHTML='<div class="card"><p class="muted">No se pudo cargar la vista del candidato.</p></div>'; }
+    }catch(err){
+      if(seq!==requestSeq) return;
+      console.error('admin candidate preview',err);
+      holder.innerHTML='<div class="card adminPreviewError"><strong>No se pudo cargar la vista.</strong><p class="muted">Intentá nuevamente. Si continúa, revisaremos la conexión con los datos.</p><button class="btn secondary" type="button" id="retryAdminPreview">Reintentar</button></div>';
+      document.getElementById('retryAdminPreview')?.addEventListener('click',renderSelected);
+    }
   }
 
   async function init(){
