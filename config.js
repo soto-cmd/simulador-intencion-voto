@@ -4,8 +4,10 @@ window.APP_CONFIG = {
 };
 
 (() => {
-  const V = '20260917s';
-  let privateLoadPromise = null;
+  const V = '20260917t';
+  let authPromise = null;
+  let rolePromise = null;
+  let helperClient = null;
 
   function addStyle(href){
     if(document.querySelector(`link[data-app-style="${href}"]`)) return;
@@ -41,39 +43,63 @@ window.APP_CONFIG = {
     }
   }
 
-  async function loadPrivateModules(){
-    if(privateLoadPromise) return privateLoadPromise;
-    privateLoadPromise = (async () => {
+  function loadAuthModule(){
+    if(authPromise) return authPromise;
+    authPromise = (async () => {
       addStyle(`candidate-access.css?v=${V}`);
-      addStyle(`admin-tabs-v2.css?v=${V}`);
-      addStyle(`admin-candidate-preview.css?v=${V}`);
-      for (const src of [
-        `candidate-auth-no-email.js?v=${V}`,
-        `candidate-dashboard.js?v=${V}`,
-        `admin-tabs-v2.js?v=${V}`,
-        `admin-access-direct.js?v=${V}`,
-        `candidate-social.js?v=${V}`,
-        `admin-candidate-preview.js?v=${V}`,
-        `admin-preview-fast.js?v=${V}`
-      ]) {
-        try { await addScript(src); } catch (err) { console.error('private module', src, err); }
-      }
-    })();
-    return privateLoadPromise;
+      await addScript(`candidate-auth-no-email.js?v=${V}`);
+    })().catch(err => { authPromise = null; throw err; });
+    return authPromise;
   }
 
-  window.ensurePrivateModules = loadPrivateModules;
+  async function loadRoleModules(role){
+    if(!role) return;
+    window.__appRole = role;
+    if(rolePromise && rolePromise.role === role) return rolePromise.promise;
+
+    const promise = (async () => {
+      if(role === 'admin'){
+        addStyle(`candidate-access.css?v=${V}`);
+        addStyle(`admin-tabs-v2.css?v=${V}`);
+        addStyle(`admin-candidate-preview.css?v=${V}`);
+        for(const src of [
+          `admin-tabs-v2.js?v=${V}`,
+          `admin-access-direct.js?v=${V}`,
+          `admin-candidate-preview.js?v=${V}`,
+          `admin-preview-fast.js?v=${V}`
+        ]){
+          try { await addScript(src); } catch(err){ console.error('admin module', src, err); }
+        }
+      } else if(role === 'candidate'){
+        addStyle(`candidate-access.css?v=${V}`);
+        try { await addScript(`candidate-social.js?v=${V}`); }
+        catch(err){ console.error('candidate module', err); }
+      }
+    })();
+    rolePromise = {role,promise};
+    return promise;
+  }
+
+  async function detectRoleAndLoad(){
+    try{
+      helperClient ||= supabase.createClient(window.APP_CONFIG.SUPABASE_URL, window.APP_CONFIG.SUPABASE_KEY);
+      const {data:{session}} = await helperClient.auth.getSession();
+      if(!session) return;
+      const {data,error} = await helperClient.rpc('vote_my_profile');
+      if(error) return;
+      const profile = Array.isArray(data) ? data[0] : data;
+      if(profile?.role) await loadRoleModules(profile.role);
+    }catch(err){ console.warn('role preload',err); }
+  }
+
+  window.ensurePrivateModules = loadAuthModule;
+  window.ensureRoleModules = loadRoleModules;
 
   async function boot(){
     loadPublicModules();
-    document.getElementById('loginBtn')?.addEventListener('click', () => loadPrivateModules(), { once:false });
-    setTimeout(async () => {
-      try {
-        const client = supabase.createClient(window.APP_CONFIG.SUPABASE_URL, window.APP_CONFIG.SUPABASE_KEY);
-        const {data:{session}} = await client.auth.getSession();
-        if(session) loadPrivateModules();
-      } catch (err) { console.warn('session preload', err); }
-    }, 250);
+    document.getElementById('loginBtn')?.addEventListener('click', () => loadAuthModule(), {once:false});
+    setTimeout(detectRoleAndLoad, 350);
+
     if('serviceWorker' in navigator){
       window.addEventListener('load', () => {
         navigator.serviceWorker.register('./sw.js').catch(err => console.warn('service worker', err));
