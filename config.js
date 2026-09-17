@@ -4,7 +4,7 @@ window.APP_CONFIG = {
 };
 
 (() => {
-  const V = '20260917p';
+  const V = '20260917q';
   let privateLoadPromise = null;
 
   function addStyle(href){
@@ -53,7 +53,8 @@ window.APP_CONFIG = {
         `admin-tabs-v2.js?v=${V}`,
         `admin-access-direct.js?v=${V}`,
         `candidate-social.js?v=${V}`,
-        `admin-candidate-preview.js?v=${V}`
+        `admin-candidate-preview.js?v=${V}`,
+        `admin-preview-fast.js?v=${V}`
       ]) {
         try { await addScript(src); } catch (err) { console.error('private module', src, err); }
       }
@@ -68,7 +69,6 @@ window.APP_CONFIG = {
 
     document.getElementById('loginBtn')?.addEventListener('click', () => loadPrivateModules(), { once:false });
 
-    // Si ya hay una sesión guardada, prepara el panel privado sin penalizar la primera pintura pública.
     setTimeout(async () => {
       try {
         const client = supabase.createClient(window.APP_CONFIG.SUPABASE_URL, window.APP_CONFIG.SUPABASE_KEY);
