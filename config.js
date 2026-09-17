@@ -4,8 +4,10 @@ window.APP_CONFIG = {
 };
 
 window.addEventListener('DOMContentLoaded', () => {
-  const script = document.createElement('script');
-  script.src = 'referral.js';
-  script.defer = true;
-  document.body.appendChild(script);
+  for (const src of ['referral.js', 'sprite-helper.js']) {
+    const script = document.createElement('script');
+    script.src = src;
+    script.defer = true;
+    document.body.appendChild(script);
+  }
 });
