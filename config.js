@@ -4,6 +4,11 @@ window.APP_CONFIG = {
 };
 
 window.addEventListener('DOMContentLoaded', () => {
+  const style = document.createElement('link');
+  style.rel = 'stylesheet';
+  style.href = 'candidate-access.css';
+  document.head.appendChild(style);
+
   for (const src of ['referral.js', 'sprite-helper.js', 'candidate-dashboard.js']) {
     const script = document.createElement('script');
     script.src = src;
