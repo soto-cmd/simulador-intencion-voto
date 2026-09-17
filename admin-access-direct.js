@@ -2,7 +2,7 @@
   const client = (typeof db !== 'undefined' && db) ? db : supabase.createClient(window.APP_CONFIG.SUPABASE_URL, window.APP_CONFIG.SUPABASE_KEY);
   let rows = [];
 
-  const esc = (s='') => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const esc = (s='') => String(s).replace(/[&<>\"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',"'":'&#39;'}[c]));
   const fmt = (v) => v ? new Date(v).toLocaleString('es-PY',{dateStyle:'medium',timeStyle:'short'}) : '';
 
   function label(c){
@@ -30,8 +30,8 @@
     const box = document.createElement('div');
     box.id = 'candidateActivationCodeBox';
     box.className = 'hidden';
-    box.style.cssText = 'margin-top:16px;padding:16px;border:1px solid #cbd5e1;border-radius:14px;background:#f8fafc';
-    box.innerHTML = '<div style="font-size:12px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:#64748b">Código de activación</div><div style="display:flex;gap:10px;align-items:center;margin-top:8px"><strong id="candidateActivationCodeValue" style="font-size:26px;letter-spacing:.08em;color:#0f274d"></strong><button id="copyCandidateActivationCode" class="btn secondary" type="button">Copiar</button></div><div id="candidateActivationExpiry" class="muted" style="margin-top:8px"></div>';
+    box.style.cssText = 'margin-top:16px;padding:18px;border:2px solid #0f274d;border-radius:16px;background:#f8fafc';
+    box.innerHTML = '<div style="font-size:12px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:#64748b">Código de activación</div><div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-top:8px"><strong id="candidateActivationCodeValue" style="font-size:30px;letter-spacing:.1em;color:#0f274d"></strong><button id="copyCandidateActivationCode" class="btn secondary" type="button">Copiar código</button></div><div id="candidateActivationExpiry" class="muted" style="margin-top:8px"></div><div class="muted" style="margin-top:6px">Este código se muestra al generarlo. Compartilo con el candidato junto con el correo autorizado.</div>';
     card.appendChild(box);
     document.getElementById('copyCandidateActivationCode')?.addEventListener('click', async () => {
       const code = document.getElementById('candidateActivationCodeValue')?.textContent || '';
@@ -45,6 +45,17 @@
     document.getElementById('candidateActivationCodeBox')?.classList.add('hidden');
     const el=document.getElementById('candidateActivationCodeValue'); if(el) el.textContent='';
     const ex=document.getElementById('candidateActivationExpiry'); if(ex) ex.textContent='';
+  }
+
+  function showCode(code, accessExpiresAt){
+    const codeBox=document.getElementById('candidateActivationCodeBox');
+    const codeValue=document.getElementById('candidateActivationCodeValue');
+    const expiry=document.getElementById('candidateActivationExpiry');
+    if(!codeBox || !codeValue || !code) return;
+    codeValue.textContent=code;
+    if(expiry) expiry.textContent=accessExpiresAt ? `Acceso habilitado hasta ${fmt(accessExpiresAt)}.` : '';
+    codeBox.classList.remove('hidden');
+    codeBox.scrollIntoView({behavior:'smooth',block:'nearest'});
   }
 
   function renderOptions(){
@@ -75,8 +86,10 @@
     return (data || []).find(r => r.candidate_id === candidateId) || null;
   }
 
-  async function loadCandidateStatus(){
-    ensureDurationField(); ensureCodeBox(); hideCode();
+  async function loadCandidateStatus(options = {}){
+    const preserveCode = !!options.preserveCode;
+    ensureDurationField(); ensureCodeBox();
+    if(!preserveCode) hideCode();
     const select = document.getElementById('existingCandidateSelect');
     const email = document.getElementById('candidateAccessEmail');
     const status = document.getElementById('candidateAccessStatus');
@@ -148,22 +161,18 @@
         if(error){ console.error(error); msg.textContent = `No se pudo actualizar: ${error.message || 'error'}`; return; }
         if(!data?.ok){ msg.textContent = errorText(data?.reason,data); return; }
         msg.textContent = `Acceso actualizado hasta ${fmt(data.access_expires_at)}.`;
+        await loadCandidateStatus();
       } else {
         if(!/^\S+@\S+\.\S+$/.test(email)){ msg.textContent = 'Ingresá un correo válido.'; return; }
         const {data,error} = await client.rpc('vote_admin_set_candidate_access', {p_candidate_id:candidateId,p_email:email,p_days:days});
         if(error){ console.error(error); msg.textContent = `No se pudo guardar: ${error.message || 'error'}`; return; }
         if(!data?.ok){ msg.textContent = errorText(data?.reason,data); return; }
         msg.textContent = `Acceso preparado por ${data.days} días para ${data.candidate}.`;
-        const codeBox=document.getElementById('candidateActivationCodeBox');
-        const codeValue=document.getElementById('candidateActivationCodeValue');
-        const expiry=document.getElementById('candidateActivationExpiry');
-        if(codeBox && codeValue && data.activation_code){
-          codeValue.textContent=data.activation_code;
-          if(expiry) expiry.textContent=`Acceso habilitado hasta ${fmt(data.access_expires_at)}.`;
-          codeBox.classList.remove('hidden');
-        }
+        const code = data.activation_code || '';
+        const expiresAt = data.access_expires_at || null;
+        await loadCandidateStatus({preserveCode:true});
+        showCode(code, expiresAt);
       }
-      await loadCandidateStatus();
     }catch(err){ console.error(err); msg.textContent = `No se pudo guardar: ${err?.message || 'error'}`; }
     finally{ btn.disabled = false; }
   }
@@ -174,7 +183,7 @@
     ensureDurationField(); ensureCodeBox();
     try{
       await loadCandidates();
-      select.addEventListener('change', loadCandidateStatus);
+      select.addEventListener('change', () => loadCandidateStatus());
       document.getElementById('candidateAccessSave')?.addEventListener('click', saveAccess);
     }catch(err){ console.error('candidate access init', err); const msg=document.getElementById('candidateAccessMsg'); if(msg) msg.textContent='No se pudieron cargar los candidatos.'; }
   }
