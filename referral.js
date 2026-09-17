@@ -13,7 +13,7 @@ async function showReferralBanner(){
   card.className='card';
   card.style.marginBottom='18px';
   card.style.borderLeft='6px solid #11213f';
-  card.innerHTML=`<strong>Invitación al simulador</strong><div style="margin-top:5px">Enlace compartido por <strong>${esc(data.name)}</strong>${data.office?` · ${esc(data.office)}`:''}.</div><div class="muted" style="margin-top:5px">El enlace permite contabilizar participaciones originadas desde esta invitación, pero no se vincula con la opción elegida por la persona.</div>`;
+  card.innerHTML=`<strong>Invitación al simulador</strong><div style="margin-top:5px">Enlace compartido por <strong>${esc(data.name)}</strong>${data.office?` · ${esc(data.office)}`:''}.</div>`;
   const registration=document.getElementById('registrationCard');
   registration?.parentNode?.insertBefore(card,registration);
 }
