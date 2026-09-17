@@ -2,6 +2,7 @@
   const socialDb = supabase.createClient(window.APP_CONFIG.SUPABASE_URL, window.APP_CONFIG.SUPABASE_KEY);
   const escSocial = (s='') => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   let rendering = false;
+  let started = false;
 
   function cleanUrl(value, platform){
     let v = String(value || '').trim();
@@ -111,10 +112,17 @@
     finally{ rendering = false; }
   }
 
-  const observer = new MutationObserver(()=>setTimeout(()=>render(),120));
-  window.addEventListener('DOMContentLoaded',()=>{
+  function start(){
+    if(started) return;
+    started = true;
     const dash=document.getElementById('dashboardView');
-    if(dash) observer.observe(dash,{attributes:true,attributeFilter:['class'],childList:true,subtree:false});
-    setTimeout(()=>render(),900);
-  });
+    if(dash){
+      const observer = new MutationObserver(()=>setTimeout(()=>render(),120));
+      observer.observe(dash,{attributes:true,attributeFilter:['class'],childList:true,subtree:false});
+    }
+    setTimeout(()=>render(),350);
+  }
+
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',start,{once:true});
+  else start();
 })();
