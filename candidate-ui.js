@@ -1,5 +1,12 @@
 (() => {
   let lastKey = '';
+  let scheduled = false;
+
+  function schedule(){
+    if(scheduled) return;
+    scheduled = true;
+    requestAnimationFrame(() => { scheduled = false; ensureHero(); });
+  }
 
   function numFromStat(labelText) {
     const cards = [...document.querySelectorAll('#statsGrid .statCard')];
@@ -9,16 +16,23 @@
     return Number(raw) || 0;
   }
 
+  function getProfile(){
+    try { return typeof currentProfile !== 'undefined' ? currentProfile : null; }
+    catch { return null; }
+  }
+
   function findCandidate() {
+    const profile = getProfile();
+    if (!profile || profile.role !== 'candidate') return null;
     try {
-      if (typeof currentProfile === 'undefined' || !currentProfile || currentProfile.role !== 'candidate') return null;
-      if (typeof candidates === 'undefined') return null;
-      return candidates.find(c => c.id === currentProfile.candidate_id) || null;
-    } catch { return null; }
+      if (typeof candidates === 'undefined') return window.__dashboardBundle?.candidate || null;
+      return candidates.find(c => c.id === profile.candidate_id) || window.__dashboardBundle?.candidate || null;
+    } catch { return window.__dashboardBundle?.candidate || null; }
   }
 
   function photoHTML(c) {
-    try { return imageMarkup(c, 'large'); } catch { return `<div class="avatarFallback largeAvatar">${(c?.name||'?').slice(0,2).toUpperCase()}</div>`; }
+    try { return imageMarkup(c, 'large'); }
+    catch { return `<div class="avatarFallback largeAvatar">${(c?.name||'?').slice(0,2).toUpperCase()}</div>`; }
   }
 
   function ensureHero() {
@@ -69,23 +83,23 @@
         </div>
         <div class="candidateChartInfo">
           <h4>Resumen visual</h4>
-          <div class="candidateMetric">
-            <div class="candidateMetricHead"><span>Intención general</span><strong>${percentage.toFixed(1).replace('.0','')}%</strong></div>
-            <div class="candidateMetricTrack"><div class="candidateMetricFill" style="width:${Math.max(0,Math.min(100,percentage))}%"></div></div>
-          </div>
-          <div class="candidateMetric">
-            <div class="candidateMetricHead"><span>Intención de hoy</span><strong>${today.toFixed(1).replace('.0','')}%</strong></div>
-            <div class="candidateMetricTrack"><div class="candidateMetricFill" style="width:${Math.max(0,Math.min(100,today))}%"></div></div>
-          </div>
+          <div class="candidateMetric"><div class="candidateMetricHead"><span>Intención general</span><strong>${percentage.toFixed(1).replace('.0','')}%</strong></div><div class="candidateMetricTrack"><div class="candidateMetricFill" style="width:${Math.max(0,Math.min(100,percentage))}%"></div></div></div>
+          <div class="candidateMetric"><div class="candidateMetricHead"><span>Intención de hoy</span><strong>${today.toFixed(1).replace('.0','')}%</strong></div><div class="candidateMetricTrack"><div class="candidateMetricFill" style="width:${Math.max(0,Math.min(100,today))}%"></div></div></div>
           <div class="candidateMetricHead"><span>Registros</span><strong>${votes} / ${total}</strong></div>
         </div>
       </div>`;
     stats.parentNode.insertBefore(hero, stats);
   }
 
-  const observer = new MutationObserver(() => requestAnimationFrame(ensureHero));
-  window.addEventListener('DOMContentLoaded', () => {
-    observer.observe(document.body, {subtree:true, childList:true, attributes:true, characterData:true});
-    setTimeout(ensureHero, 500);
-  });
+  function start(){
+    const stats = document.getElementById('statsGrid');
+    const view = document.getElementById('dashboardView');
+    if(stats) new MutationObserver(schedule).observe(stats,{childList:true});
+    if(view) new MutationObserver(schedule).observe(view,{attributes:true,attributeFilter:['class']});
+    window.addEventListener('dashboard:loaded', schedule);
+    setTimeout(schedule,250);
+  }
+
+  if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded',start,{once:true});
+  else start();
 })();
