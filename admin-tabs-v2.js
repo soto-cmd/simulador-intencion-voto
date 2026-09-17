@@ -20,6 +20,7 @@
       nav.innerHTML = `
         <button type="button" data-admin-tab="resumen" class="active"><span class="tabIcon">▦</span><span><strong>Resumen</strong><small>Estadísticas y evolución</small></span></button>
         <button type="button" data-admin-tab="enlaces"><span class="tabIcon">↗</span><span><strong>Enlaces</strong><small>Invitaciones de candidatos</small></span></button>
+        <button type="button" data-admin-tab="vista-candidato"><span class="tabIcon">◉</span><span><strong>Vista candidato</strong><small>Ver lo que ve cada candidato</small></span></button>
         <button type="button" data-admin-tab="candidaturas"><span class="tabIcon">◎</span><span><strong>Candidatos</strong><small>Accesos y administración</small></span></button>`;
       head.insertAdjacentElement('afterend', nav);
       nav.querySelectorAll('[data-admin-tab]').forEach(btn => btn.addEventListener('click', () => {
@@ -36,12 +37,14 @@
     const grid = document.querySelector('#dashboardView > .dashboardGrid');
     const referral = document.getElementById('referralPanel');
     const admin = document.getElementById('adminPanel');
+    const preview = document.getElementById('adminCandidatePreview');
     const candidateLink = document.getElementById('candidateLinkBox');
     if(stats) stats.dataset.adminSection='resumen';
     if(visual) visual.dataset.adminSection='resumen';
     if(grid) grid.dataset.adminSection='resumen';
     if(referral) referral.dataset.adminSection='enlaces';
     if(admin) admin.dataset.adminSection='candidaturas';
+    if(preview) preview.dataset.adminSection='vista-candidato';
     if(candidateLink) candidateLink.dataset.adminSection='candidate-only';
   }
 
@@ -57,14 +60,15 @@
     });
     const title = document.getElementById('dashboardTitle');
     if(title){
-      title.textContent = currentTab === 'resumen' ? 'Administración general' : currentTab === 'enlaces' ? 'Enlaces de candidatos' : 'Acceso de candidatos';
+      title.textContent = currentTab === 'resumen' ? 'Administración general' : currentTab === 'enlaces' ? 'Enlaces de candidatos' : currentTab === 'vista-candidato' ? 'Vista de candidatos' : 'Acceso de candidatos';
     }
   }
 
   async function activateIfAdmin(){
     const dash = document.getElementById('dashboardView');
     if(!dash || dash.classList.contains('hidden')) return;
-    const {data:profile} = await client.from('vote_candidate_users').select('role').maybeSingle();
+    const {data:profileData} = await client.rpc('vote_my_profile');
+    const profile = Array.isArray(profileData) ? profileData[0] : profileData;
     const nav = document.getElementById('adminTabsV2');
     if(profile?.role !== 'admin'){
       if(nav) nav.remove();
