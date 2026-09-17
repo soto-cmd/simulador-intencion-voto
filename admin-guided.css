@@ -1,1 +1,16 @@
-#adminPanel .adminAutoField{background:#eef2f7!important;color:#64748b!important;border-style:dashed!important;cursor:not-allowed}#adminPanel select#candName,#adminPanel select#candParty,#adminPanel select#candRace{background:#fff!important;font-weight:700;color:#0f274d}#adminPanel .formGrid>div:has(#candOffice),#adminPanel .formGrid>div:has(#candList),#adminPanel .formGrid>div:has(#candPartyAbbr),#adminPanel .formGrid>div:has(#candColor),#adminPanel .formGrid>div:has(#candOption),#adminPanel .formGrid>div:has(#candOrder),#adminPanel .formGrid>div:has(#candPhoto){opacity:.78}#addCandidateBtn{background:linear-gradient(180deg,#173f78,#0c2d5d)!important}
+#adminPanel .adminAutoField{background:#eef2f7!important;color:#64748b!important;border-style:dashed!important;cursor:not-allowed}
+#adminPanel select#candName,#adminPanel select#candParty,#adminPanel select#candRace{background:#fff!important;font-weight:700;color:#0f274d;min-height:48px}
+#adminPanel .formGrid>div:has(#candOffice),#adminPanel .formGrid>div:has(#candList),#adminPanel .formGrid>div:has(#candPartyAbbr),#adminPanel .formGrid>div:has(#candColor),#adminPanel .formGrid>div:has(#candOption),#adminPanel .formGrid>div:has(#candOrder),#adminPanel .formGrid>div:has(#candPhoto){display:none!important}
+#adminPanel .formGrid{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:16px!important}
+#adminPanel .formGrid>div:has(#candName){grid-column:1/-1}
+#adminPanel .formGrid>div:has(#candEmail){grid-column:1/-1}
+#adminPanel .formGrid>div:has(#candName) label{font-size:0}
+#adminPanel .formGrid>div:has(#candName) label:after{content:"Candidato";font-size:12px}
+#adminPanel .formGrid>div:has(#candParty) label{font-size:0}
+#adminPanel .formGrid>div:has(#candParty) label:after{content:"Partido / movimiento";font-size:12px}
+#adminPanel .formGrid>div:has(#candRace) label{font-size:0}
+#adminPanel .formGrid>div:has(#candRace) label:after{content:"Tipo";font-size:12px}
+#adminPanel .formGrid>div:has(#candEmail) label{font-size:0}
+#adminPanel .formGrid>div:has(#candEmail) label:after{content:"Correo del candidato";font-size:12px}
+#addCandidateBtn{background:linear-gradient(180deg,#173f78,#0c2d5d)!important;margin-top:18px!important;min-width:180px}
+@media(max-width:700px){#adminPanel .formGrid{grid-template-columns:1fr!important}#adminPanel .formGrid>div:has(#candName),#adminPanel .formGrid>div:has(#candEmail){grid-column:auto}}
