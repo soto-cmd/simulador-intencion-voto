@@ -1,0 +1,148 @@
+/* General UI audit refresh — 2026-09-17 */
+:root{
+  --ui-navy:#102b55;
+  --ui-navy-2:#173c72;
+  --ui-surface:#ffffff;
+  --ui-soft:#f5f7fb;
+  --ui-line:#dfe5ee;
+  --ui-text:#142033;
+  --ui-muted:#66758b;
+  --ui-red:#d91f26;
+  --ui-blue:#1745b8;
+  --ui-radius:18px;
+  --ui-shadow:0 12px 32px rgba(20,32,51,.08);
+}
+
+body{
+  background:
+    radial-gradient(circle at 8% -10%,rgba(23,69,184,.08),transparent 27%),
+    radial-gradient(circle at 92% -14%,rgba(217,31,38,.07),transparent 26%),
+    linear-gradient(180deg,#f1f4f8 0%,#e9edf3 100%) !important;
+  color:var(--ui-text);
+}
+
+/* Header */
+.topbarParaguay{
+  min-height:78px;
+  padding-top:15px!important;
+  padding-bottom:15px!important;
+  background:linear-gradient(115deg,#2f3743 0%,#3e4754 55%,#303844 100%)!important;
+  border-bottom:0!important;
+  box-shadow:0 8px 26px rgba(15,23,42,.18)!important;
+}
+.pyRibbon{height:5px!important;box-shadow:0 1px 0 rgba(0,0,0,.08)}
+.brandMarkParaguay{width:50px!important;height:50px!important;border-radius:14px!important;background:#fff!important;box-shadow:0 6px 16px rgba(0,0,0,.16)!important}
+.brandCopy strong{font-size:19px!important;font-weight:850;letter-spacing:-.025em}
+.brandCopy>span{display:block;margin-top:4px;color:#d9e2ef;font-size:12px;font-weight:600;letter-spacing:.02em}
+.electionMetaParaguay{gap:8px 20px!important;color:#eef3f9}
+.electionMetaParaguay span{padding:7px 10px;border:1px solid rgba(255,255,255,.12);border-radius:10px;background:rgba(255,255,255,.055)}
+.headerAccessBtn{min-height:44px!important;padding:0 18px!important;border-radius:12px!important;background:#fff!important;color:var(--ui-navy)!important;border:1px solid rgba(255,255,255,.4)!important;box-shadow:0 7px 16px rgba(0,0,0,.11)!important}
+
+/* Main layout */
+.wrap{width:min(1380px,calc(100% - 32px))!important;margin-top:26px!important}
+.card{border:1px solid var(--ui-line)!important;border-radius:var(--ui-radius)!important;box-shadow:var(--ui-shadow)!important}
+
+/* Hero */
+.heroCompact{
+  position:relative;
+  overflow:hidden;
+  padding:34px 36px!important;
+  background:linear-gradient(135deg,#fff 0%,#f7f9fd 62%,#eef3fb 100%)!important;
+  border-top:4px solid var(--ui-navy)!important;
+}
+.heroCompact::after{
+  content:"";
+  position:absolute;
+  width:230px;height:230px;border-radius:50%;
+  right:-80px;top:-100px;
+  background:linear-gradient(145deg,rgba(217,31,38,.10),rgba(23,69,184,.11));
+  pointer-events:none;
+}
+.heroCompact .eyebrow{color:var(--ui-blue)!important;font-size:11px!important;letter-spacing:.16em!important}
+.heroCompact h1{font-size:clamp(42px,5.1vw,64px)!important;max-width:950px;line-height:.98!important;color:#0c2850!important;margin:5px 0 16px!important}
+.heroCompact p{max-width:1040px!important;color:#485970!important;font-size:16px!important;line-height:1.65!important;margin-bottom:0}
+
+/* Participation form */
+.formCard{padding:30px!important;background:rgba(255,255,255,.96)!important}
+.formCard h2{font-size:26px!important;color:#102b55;margin-bottom:20px!important;letter-spacing:-.025em}
+.formGrid{gap:18px 20px!important}
+.formCard label{color:#34445b;font-size:12px!important;letter-spacing:.035em}
+.formCard input,.formCard select{
+  min-height:50px;
+  border-radius:12px!important;
+  border:1px solid #cfd8e5!important;
+  background:#fafbfd!important;
+  transition:border-color .15s ease,box-shadow .15s ease,background .15s ease;
+}
+.formCard input:focus,.formCard select:focus{background:#fff!important;border-color:#41699e!important;box-shadow:0 0 0 4px rgba(65,105,158,.11)!important}
+.formCard small{display:block;margin-top:6px;color:#78879a}
+.consentRow{padding:14px 16px;border-radius:12px;background:#f6f8fb;border:1px solid #e4e9f1;margin-top:20px!important;color:#4c5d73}
+#startBtn{min-width:180px;min-height:48px;border-radius:12px!important;background:linear-gradient(180deg,#173c72,#102b55)!important;box-shadow:0 8px 16px rgba(16,43,85,.16)!important}
+
+/* Ballot */
+.ballotShell{background:#e8ebef!important;border:1px solid #9ca5b2!important;border-radius:15px;overflow:hidden;padding:7px!important;box-shadow:0 14px 34px rgba(15,23,42,.12)!important}
+.ballotTitleBar{background:linear-gradient(180deg,#4a535f,#3d4652)!important;border-bottom:0!important;padding:15px 18px!important}
+.ballotTitleMain{font-size:25px!important;letter-spacing:-.01em!important;text-transform:none!important}
+.ballotTitleSub{font-size:13px!important;color:#e8eef6}
+.progressPills{background:#f8f9fb!important;border-bottom:1px solid #d7dde6!important;padding:12px!important}
+.progressPill{border:1px solid #dde3eb;background:#eef1f5!important;color:#526176!important}
+.progressPill.active{background:var(--ui-navy)!important;color:#fff!important;border-color:var(--ui-navy)!important}
+.ballotCard,.juntaCandidateCard,.listCard{border:1px solid #b8c1cd!important;box-shadow:0 5px 14px rgba(15,23,42,.055)}
+.ballotCard:hover,.juntaCandidateCard:hover,.listCard:hover{box-shadow:0 11px 24px rgba(15,23,42,.13)!important;transform:translateY(-2px)}
+
+/* Private access */
+#authView.narrow{width:min(780px,calc(100% - 28px))!important;margin-top:48px!important}
+#authView>.card{border-radius:22px!important;box-shadow:0 22px 55px rgba(15,23,42,.16)!important}
+#authView>.card::before{height:7px!important;background:linear-gradient(90deg,var(--ui-red) 0 33.33%,#fff 33.33% 66.66%,var(--ui-blue) 66.66% 100%)!important}
+#authView h2{font-size:31px!important}
+#authView input{min-height:52px!important;background:#fafbfd!important}
+#authView .actions{padding-top:4px}
+#authView .actions .btn{min-height:50px!important}
+#signInBtn{background:linear-gradient(180deg,#173c72,#102b55)!important}
+
+/* Dashboard */
+.dashboardHead{align-items:center!important;padding:8px 0 4px!important}
+.dashboardHead .eyebrow{color:#687a92}
+.dashboardHead h2{font-size:34px!important;color:#102b55!important;margin:3px 0 0!important}
+#logoutBtn{background:#fff!important;border:1px solid #d5dde8!important}
+.statCard{background:linear-gradient(180deg,#fff,#fafbfd)!important;border-radius:16px!important;padding:22px!important}
+.statLabel{color:#697a91!important;font-size:11px!important}
+.statValue{color:#102b55!important;font-size:37px!important}
+.dashboardGrid>.card,.candidateLinkBox,#adminPanel>.card{background:#fff!important}
+.candidateLinkBox{border-left:5px solid #1745b8!important}
+.candidateLinkRow input{min-height:46px;background:#f8fafc!important}
+
+/* Admin */
+#adminPanel{gap:22px!important}
+#adminPanel>.card{border-radius:18px!important;padding:28px!important}
+#candidateAccessAdminCard{border-top:4px solid #102b55!important}
+#candidateAccessAdminCard h3{font-size:24px!important;margin-bottom:8px!important}
+#adminCandidates .adminRow{transition:transform .15s ease,box-shadow .15s ease;border-color:#e0e6ee!important}
+#adminCandidates .adminRow:hover{transform:translateY(-1px);box-shadow:0 7px 18px rgba(15,23,42,.07)}
+#candidateActivationCodeBox{border:1px solid #c9d7e9!important;background:linear-gradient(135deg,#f7faff,#eef4fc)!important;box-shadow:inset 4px 0 0 #1745b8}
+
+/* General */
+.btn{font-weight:800!important;letter-spacing:-.01em}
+input,select,button{transition:all .15s ease}
+.disclaimer{max-width:1100px!important;color:#69778a!important;padding:8px 14px 0}
+.toast{border:1px solid rgba(255,255,255,.1)}
+
+@media(max-width:900px){
+  .wrap{width:min(100% - 20px,1380px)!important}
+  .heroCompact{padding:26px!important}
+  .formCard{padding:22px!important}
+  .electionMetaParaguay span{background:transparent;border:0;padding:0}
+}
+
+@media(max-width:700px){
+  .topbarParaguay{min-height:unset;padding-top:12px!important;padding-bottom:11px!important}
+  .brandMarkParaguay{width:40px!important;height:40px!important}
+  .brandCopy strong{font-size:14px!important}
+  .brandCopy>span{font-size:10px!important;margin-top:2px}
+  .heroCompact{padding:22px!important;border-top-width:3px!important}
+  .heroCompact h1{font-size:36px!important}
+  .heroCompact p{font-size:14px!important;line-height:1.55!important}
+  .formCard{padding:18px!important}
+  .consentRow{padding:12px!important}
+  #authView>.card::after{padding-left:22px!important;padding-right:22px!important}
+}
