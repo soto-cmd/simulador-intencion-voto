@@ -8,7 +8,6 @@ window.APP_CONFIG = {
   let authPromise = null;
   let rolePromise = null;
   let previewPromise = null;
-  let helperClient = null;
 
   function addStyle(href){
     if(document.querySelector(`link[data-app-style="${href}"]`)) return;
@@ -90,18 +89,6 @@ window.APP_CONFIG = {
     return promise;
   }
 
-  async function detectRoleAndLoad(){
-    try{
-      helperClient ||= supabase.createClient(window.APP_CONFIG.SUPABASE_URL, window.APP_CONFIG.SUPABASE_KEY);
-      const {data:{session}} = await helperClient.auth.getSession();
-      if(!session) return;
-      const {data,error} = await helperClient.rpc('vote_my_profile');
-      if(error) return;
-      const profile = Array.isArray(data) ? data[0] : data;
-      if(profile?.role) await loadRoleModules(profile.role);
-    }catch(err){ console.warn('role preload',err); }
-  }
-
   window.ensurePrivateModules = loadAuthModule;
   window.ensureRoleModules = loadRoleModules;
   window.ensureAdminPreviewFast = loadAdminPreviewFast;
@@ -109,7 +96,10 @@ window.APP_CONFIG = {
   async function boot(){
     loadPublicModules();
     document.getElementById('loginBtn')?.addEventListener('click', () => loadAuthModule(), {once:false});
-    setTimeout(detectRoleAndLoad, 350);
+    window.addEventListener('dashboard:loaded', event => {
+      const role = event.detail?.profile?.role;
+      if(role) loadRoleModules(role);
+    });
 
     if('serviceWorker' in navigator){
       window.addEventListener('load', () => {
