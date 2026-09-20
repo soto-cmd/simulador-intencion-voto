@@ -1,17 +1,17 @@
-const CACHE_NAME = 'sim-voto-static-v4';
+const CACHE_NAME = 'sim-voto-static-v5';
 const CORE_ASSETS = [
   './styles.css?v=20260917i',
   './polish.css?v=20260917h',
   './candidate-ui.css?v=20260917g',
   './mobile.css?v=20260917a',
-  './ui-audit.css?v=20260917u',
+  './ui-audit.css?v=20260920a',
   './app.js?v=20260917i',
   './dashboard-fast.js?v=20260917u',
   './candidate-ui.js?v=20260917t',
-  './referral.js?v=20260917u',
-  './sprite-helper.js?v=20260917u',
-  './residence-select.js?v=20260917u',
-  './referral-share-social.js?v=20260917u',
+  './referral.js?v=20260920a',
+  './sprite-helper.js?v=20260920a',
+  './residence-select.js?v=20260920a',
+  './referral-share-social.js?v=20260920a',
   './assets/candidates/anr-sprite.webp',
   './assets/candidates/plra-sprite.webp'
 ];
