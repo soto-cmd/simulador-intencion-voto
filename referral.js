@@ -31,7 +31,7 @@ document.getElementById('startBtn')?.addEventListener('click', async (event)=>{
     p_gender:gender,
     p_age_band:age,
     p_residence_zone:residence,
-    p_ref_code:activeReferralCode
+    p_referral_code:activeReferralCode
   });
   $('startBtn').disabled=false;
   if(error){console.error(error);$('registrationMsg').textContent='No pudimos validar los datos. Revisalos e intentá otra vez.';return;}
