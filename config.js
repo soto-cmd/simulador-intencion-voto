@@ -4,7 +4,7 @@ window.APP_CONFIG = {
 };
 
 (() => {
-  const V = '20260920a';
+  const V = '20260920b';
   let authPromise = null;
   let rolePromise = null;
   let previewPromise = null;
