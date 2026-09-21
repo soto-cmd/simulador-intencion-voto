@@ -4,7 +4,7 @@ window.APP_CONFIG = {
 };
 
 (() => {
-  const V = '20260920b';
+  const V = '20260921a';
   let authPromise = null;
   let rolePromise = null;
   let previewPromise = null;
@@ -34,6 +34,7 @@ window.APP_CONFIG = {
     addStyle(`ui-audit.css?v=${V}`);
     addStyle(`candidate-social.css?v=${V}`);
     for (const src of [
+      `election-data.js?v=${V}`,
       `referral.js?v=${V}`,
       `sprite-helper.js?v=${V}`,
       `residence-select.js?v=${V}`,
