@@ -2,6 +2,7 @@
   let bundlePromise = null;
   let bundleCache = null;
   let bundleTs = 0;
+  let postLoadRefreshTimer = null;
   const CACHE_MS = 15000;
 
   function pctFast(v){ return Number(v || 0).toFixed(1).replace('.0','') + '%'; }
@@ -40,6 +41,15 @@
     if(!target) return;
     if(!rows?.length){ target.innerHTML = '<div class="empty">Aún no hay datos suficientes.</div>'; return; }
     target.innerHTML = rows.map(r => `<div class="historyRow"><div>${new Date(r.day + 'T12:00:00').toLocaleDateString('es-PY',{day:'2-digit',month:'short'})}${role === 'admin' ? `<small><br>${esc(r.candidate_name)}</small>` : ''}</div><div class="barTrack"><div class="barFill" style="width:${Math.min(100,Number(r.percentage||0))}%"></div></div><strong>${pctFast(r.percentage)}</strong></div>`).join('');
+  }
+
+  function schedulePostLoadRefresh(profile){
+    clearTimeout(postLoadRefreshTimer);
+    postLoadRefreshTimer = setTimeout(() => {
+      const dashboard = document.getElementById('dashboardView');
+      if(!dashboard || dashboard.classList.contains('hidden')) return;
+      fastLoadDashboard(profile || currentProfile || window.currentProfile || null, true);
+    }, 1200);
   }
 
   async function fastLoadDashboard(profile, force=false){
@@ -100,6 +110,8 @@
 
     window.ensureRoleModules?.(p.role);
     window.dispatchEvent(new CustomEvent('dashboard:loaded',{detail:{profile:p,bundle:data}}));
+
+    if(!force) schedulePostLoadRefresh(p);
   }
 
   async function fastClaimRoleAndDashboard(){
