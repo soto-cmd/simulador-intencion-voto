@@ -3,7 +3,11 @@ const activeReferralCode = (new URLSearchParams(window.location.search).get('ref
 let referralRendering = false;
 
 function referralBaseUrl(code){
-  return `${window.location.origin}${window.location.pathname}?ref=${encodeURIComponent(code)}`;
+  if(typeof window.buildPublicReferralUrl === 'function') return window.buildPublicReferralUrl(code);
+  const base = window.APP_CONFIG.PUBLIC_BASE_URL || 'https://soto-cmd.github.io/simulador-intencion-voto/';
+  const url = new URL(base);
+  url.searchParams.set('ref', String(code || '').trim());
+  return url.toString();
 }
 
 async function showReferralBanner(){
