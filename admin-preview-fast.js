@@ -1,7 +1,7 @@
 (() => {
   const fastDb = supabase.createClient(window.APP_CONFIG.SUPABASE_URL, window.APP_CONFIG.SUPABASE_KEY);
-  const CACHE_KEY = 'admin_preview_bulk_v1';
-  const CACHE_MS = 60000;
+  const CACHE_KEY = 'admin_preview_bulk_v2';
+  const CACHE_MS = 15000;
   let bulkData = null;
   let bulkPromise = null;
   let selectedId = '';
@@ -9,6 +9,11 @@
   const esc = (s='') => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const pct = v => `${Number(v || 0).toFixed(1).replace('.0','')}%`;
   const fmt = v => v ? new Date(v).toLocaleString('es-PY',{dateStyle:'medium',timeStyle:'short'}) : 'Sin vencimiento';
+  const publicReferralUrl = code => {
+    if(typeof window.buildPublicReferralUrl === 'function') return window.buildPublicReferralUrl(code);
+    const base = window.APP_CONFIG.PUBLIC_BASE_URL || 'https://soto-cmd.github.io/simulador-intencion-voto/';
+    const url = new URL(base); url.searchParams.set('ref', String(code || '').trim()); return url.toString();
+  };
 
   function readCache(){
     try{
@@ -78,7 +83,7 @@
 
   function demoRows(data){
     if(!data||typeof data!=='object') return '<div class="empty">Sin datos demográficos disponibles.</div>';
-    return [['Sexo',data.gender],['Edad',data.age],['Residencia',data.residence]].map(([group,items])=>{
+    return [['Sexo',data.gender],['Edad',data.age],['Residencia',data.residence],['Barrio',data.neighborhood]].map(([group,items])=>{
       if(!Array.isArray(items)||!items.length) return '';
       return `<div class="demoSection"><h4>${group}</h4>${items.map(r=>`<div class="demoRow"><span>${esc(r.label||'')}</span><div class="barTrack"><div class="barFill" style="width:${Math.max(0,Math.min(100,Number(r.percentage||0)))}%"></div></div><strong>${r.count??''}</strong></div>`).join('')}</div>`;
     }).join('')||'<div class="empty">Sin datos demográficos disponibles.</div>';
@@ -100,7 +105,7 @@
     if(!holder||!payload) return;
     const candidate=payload.candidate||{}, row=payload.stats||{}, hist=payload.history||[], ref=payload.referral||{}, acc=payload.access||{};
     const color=candidate.party_color||(candidate.party_abbr==='ANR'?'#e31b23':candidate.party_abbr==='PLRA'?'#1437d1':'#1d4ed8');
-    const link=ref.referral_code?`${location.origin}${location.pathname}?ref=${encodeURIComponent(ref.referral_code)}`:'';
+    const link=ref.referral_code?publicReferralUrl(ref.referral_code):'';
     holder.innerHTML=`
       <div class="adminPreviewNotice">Vista previa del candidato · Solo lectura</div>
       <div class="candidateVisualHero">
@@ -111,7 +116,7 @@
       <div class="card adminPreviewAccess"><strong>Estado del acceso:</strong> ${acc.account_active?(acc.access_valid?'Activo':'Vencido'):'Pendiente de activación'}${acc.access_email?` · ${esc(acc.access_email)}`:''}${acc.access_expires_at?` · hasta ${esc(fmt(acc.access_expires_at))}`:''}</div>
       <div class="card candidateLinkBox"><h3>Enlace único para participantes</h3>${link?`<div class="candidateLinkRow"><input id="adminPreviewReferralLink" readonly value="${esc(link)}"><button id="adminPreviewCopy" class="btn secondary" type="button">Copiar enlace</button><button id="adminPreviewShare" class="btn" type="button">Compartir</button></div>`:'<p class="muted">Todavía no hay enlace asignado.</p>'}</div>
       <div class="card candidateSocialCard"><div class="candidateSocialHead"><div><p class="eyebrow">PERFIL DEL CANDIDATO</p><h3>Redes sociales</h3><p class="muted">Esto es lo que tiene cargado actualmente.</p></div></div>${socialButtons(candidate)}</div>
-      <div class="dashboardGrid"><div class="card"><h3>Evolución últimos 7 días</h3><div>${historyRows(hist,color)}</div></div><div class="card"><h3>Perfil general de participantes</h3><p class="muted">El candidato ve datos generales, no preferencias individuales.</p><div>${demoRows(demographics)}</div></div></div>`;
+      <div class="dashboardGrid"><div class="card"><h3>Evolución últimos 7 días</h3><div>${historyRows(hist,color)}</div></div><div class="card"><h3>Perfil general de participantes</h3><p class="muted">Solo incluye simulaciones completadas; no muestra preferencias individuales.</p><div>${demoRows(demographics)}</div></div></div>`;
     attachActions(link,candidate.name||'');
   }
 
