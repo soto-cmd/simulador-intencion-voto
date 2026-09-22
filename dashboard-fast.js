@@ -9,6 +9,11 @@
   function statCardsFast(items){
     return items.map(([a,b]) => `<div class="statCard"><div class="statLabel">${esc(a)}</div><div class="statValue">${esc(b)}</div></div>`).join('');
   }
+  function publicReferralUrl(code){
+    if(typeof window.buildPublicReferralUrl === 'function') return window.buildPublicReferralUrl(code);
+    const base = window.APP_CONFIG.PUBLIC_BASE_URL || 'https://soto-cmd.github.io/simulador-intencion-voto/';
+    const url = new URL(base); url.searchParams.set('ref', String(code || '').trim()); return url.toString();
+  }
 
   async function getBundle(force=false){
     if(!force && bundleCache && Date.now() - bundleTs < CACHE_MS) return bundleCache;
@@ -92,7 +97,7 @@
       const box = document.getElementById('candidateLinkBox');
       const input = document.getElementById('candidateLinkInput');
       if(code && box && input){
-        input.value = `${location.origin}${location.pathname}?ref=${encodeURIComponent(code)}`;
+        input.value = publicReferralUrl(code);
         box.classList.remove('hidden');
       }
     }else{
