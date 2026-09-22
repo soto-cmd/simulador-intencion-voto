@@ -1,10 +1,18 @@
 window.APP_CONFIG = {
   SUPABASE_URL: 'https://oxirewjzmnfnbwiugoac.supabase.co',
-  SUPABASE_KEY: 'sb_publishable_gkc-Cjh2ykNYvlf5JRf3NQ_UU2s73jC'
+  SUPABASE_KEY: 'sb_publishable_gkc-Cjh2ykNYvlf5JRf3NQ_UU2s73jC',
+  PUBLIC_BASE_URL: 'https://soto-cmd.github.io/simulador-intencion-voto/'
+};
+
+window.buildPublicReferralUrl = function(code){
+  const base = window.APP_CONFIG.PUBLIC_BASE_URL;
+  const url = new URL(base);
+  if(code) url.searchParams.set('ref', String(code).trim());
+  return url.toString();
 };
 
 (() => {
-  const V = '20260921a';
+  const V = '20260922b';
   let authPromise = null;
   let rolePromise = null;
   let previewPromise = null;
